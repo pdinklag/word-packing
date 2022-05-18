@@ -1,12 +1,3 @@
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include "doctest.h"
-
-#include <packed_int_vector.hpp>
-
-namespace pdinklag::test::packed_int_vector {
-
-using PackedIntVector = pdinklag::PackedIntVector<uint64_t>;
-
 TEST_SUITE("packed_int_vector") {
     TEST_CASE("set and get") {
         auto iota_test = [](size_t width){
@@ -30,7 +21,7 @@ TEST_SUITE("packed_int_vector") {
             }
         };
 
-        for(size_t w = 1; w < 64; w++) iota_test(w);
+        for(size_t w = 1; w <= MAX_WIDTH; w++) iota_test(w);
     }
 
     TEST_CASE("resize") {
@@ -75,7 +66,7 @@ TEST_SUITE("packed_int_vector") {
             }
         };
 
-        for(size_t w = 1; w < 64; w++) resize_test(w);
+        for(size_t w = 1; w <= MAX_WIDTH; w++) resize_test(w);
     }
 
     TEST_CASE("empty") {
@@ -85,7 +76,7 @@ TEST_SUITE("packed_int_vector") {
             CHECK(v.empty());
             CHECK(v.begin() == v.end());
         };
-        for(size_t w = 1; w < 64; w++) empty_test(w);
+        for(size_t w = 1; w <= MAX_WIDTH; w++) empty_test(w);
     }
 
     TEST_CASE("reserve") {
@@ -113,7 +104,7 @@ TEST_SUITE("packed_int_vector") {
             CHECK(v.empty());
         };
 
-        for(size_t w = 1; w < 64; w++) reserve_test(w);
+        for(size_t w = 1; w <= MAX_WIDTH; w++) reserve_test(w);
     }
 
     TEST_CASE("append") {
@@ -135,7 +126,7 @@ TEST_SUITE("packed_int_vector") {
             }
         };
 
-        for(size_t w = 1; w < 64; w++) append_test(w);
+        for(size_t w = 1; w <= MAX_WIDTH; w++) append_test(w);
     }
 
     TEST_CASE("pop_back") {
@@ -160,7 +151,7 @@ TEST_SUITE("packed_int_vector") {
             CHECK(v.capacity() == num);
         };
 
-        for(size_t w = 1; w < 64; w++) pop_test(w);
+        for(size_t w = 1; w <= MAX_WIDTH; w++) pop_test(w);
     }
 
     TEST_CASE("shrink_to_fit") {
@@ -187,7 +178,7 @@ TEST_SUITE("packed_int_vector") {
             CHECK(v.capacity() == less+1);
         };
 
-        for(size_t w = 1; w < 64; w++) shrink_test(w);
+        for(size_t w = 1; w <= MAX_WIDTH; w++) shrink_test(w);
     }
 
     TEST_CASE("clear") {
@@ -204,7 +195,7 @@ TEST_SUITE("packed_int_vector") {
             CHECK(v.capacity() == 0);
         };
 
-        for(size_t w = 1; w < 64; w++) clear_test(w);
+        for(size_t w = 1; w <= MAX_WIDTH; w++) clear_test(w);
     }
 
     TEST_CASE("iterator") {
@@ -230,7 +221,7 @@ TEST_SUITE("packed_int_vector") {
             CHECK(chk == sum);
         };
 
-        for(size_t w = 1; w < 64; w++) iterator_test(w);
+        for(size_t w = 1; w <= MAX_WIDTH; w++) iterator_test(w);
     }
 
     TEST_CASE("const_iterator") {
@@ -257,8 +248,6 @@ TEST_SUITE("packed_int_vector") {
             CHECK(chk == sum);
         };
 
-        for(size_t w = 1; w < 64; w++) const_iterator_test(w);
+        for(size_t w = 1; w <= MAX_WIDTH; w++) const_iterator_test(w);
     }
-}
-
 }

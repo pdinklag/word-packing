@@ -5,7 +5,7 @@
 
 #include <algorithm>
 #include <cassert>
-#include <type_traits>
+#include <limits>
 
 namespace pdinklag {
 
@@ -20,23 +20,21 @@ using namespace word_packing_internals;
  * Use this class if the width of the contained integer is known only at runtime.
  * If the width is already known at compile time, use \ref PackedFixedIntVector to utilize a speedup through compiler optimizations.
  * 
- * The supported bit widths range from 1 to the width of the pack word type minus one.
+ * The supported bit widths range from 1 to the width of the pack word type.
  * 
  * \tparam PackWord the unsigned integer types to pack words into
  */
-template<std::unsigned_integral PackWord>
-class PackedIntVector {
+template<std::unsigned_integral PackWord = uintmax_t>
+class PackedIntVector : public IntContainer<PackedIntVector<PackWord>> {
 private:
     static constexpr size_t PACK_WORD_BITS = std::numeric_limits<PackWord>::digits;
+    static constexpr size_t PACK_WORD_MAX = std::numeric_limits<PackWord>::max();
 
     size_t size_;
     size_t capacity_;
     size_t width_;
     size_t mask_;
     std::unique_ptr<PackWord[]> data_;
-
-    using MyIntRef = IntRef<PackedIntVector>;
-    using MyConstIntRef = ConstIntRef<PackedIntVector>;
 
 public:
     /**
@@ -69,9 +67,9 @@ public:
      * \param size the number of integers in the vector
      * \param width the width, in bits, of each integer
      */
-    PackedIntVector(size_t size, size_t width) : size_(size), capacity_(size), width_(width), mask_(low_mask(width)) {
+    PackedIntVector(size_t size, size_t width) : size_(size), capacity_(size), width_(width), mask_(PACK_WORD_MAX >> (PACK_WORD_BITS - width)) {
         assert(width_ > 0);
-        assert(width_ < PACK_WORD_BITS);
+        assert(width_ <= PACK_WORD_BITS);
         data_ = allocate_pack_words<PackWord>(capacity_, width_);
     }
 
@@ -274,80 +272,6 @@ public:
     PackWord const* data() const { return data_.get(); }
 
     /**
-     * \brief Retrieves a specific integer from the vector
-     * 
-     * This function simply forwards to \ref get .
-     * 
-     * \param i the index of the integer
-     * \return the integer at the given index
-     */
-    uintmax_t operator[](size_t i) const { return get(i); }
-
-    /**
-     * \brief Provides read/write access to a specific integer in the vector
-     * 
-     * \param i the index of the integer
-     * \return a proxy allowing reading and writing
-     */
-    auto operator[](size_t i) { return IntRef(*this, i); }
-
-    /**
-     * \brief Returns an iterator to the first integer
-     * 
-     * \return an iterator to the first integer 
-     */
-    auto begin() { return IntIterator<MyIntRef> { IntRef(*this, 0) }; }
-
-    /**
-     * \brief Returns an iterator to right beyond the last integer
-     * 
-     * \return an iterator to right beyond the last integer
-     */
-    auto end() { return IntIterator<MyIntRef> { IntRef(*this, size_) }; }
-
-    /**
-     * \brief Returns a const iterator to the first integer
-     * 
-     * \return a const iterator to the first integer 
-     */
-    auto begin() const { return IntIterator<MyConstIntRef> { ConstIntRef(*this, 0) }; }
-
-    /**
-     * \brief Returns a const iterator to right beyond the last integer
-     * 
-     * \return a const iterator to right beyond the last integer
-     */
-    auto end() const { return IntIterator<MyConstIntRef> { ConstIntRef(*this, size_) }; }
-
-    /**
-     * \brief Provides read/write access to the first integer
-     * 
-     * \return a proxy allowing reading and writing
-     */
-    auto front() { return IntRef(*this, 0); }
-
-    /**
-     * \brief Returns the first integer
-     * 
-     * \return the first integer
-     */
-    uintmax_t front() const { return get(0); }
-
-    /**
-     * \brief Provides read/write access to the last integer
-     * 
-     * \return a proxy allowing reading and writing
-     */
-    auto back() { return IntRef(*this, size_ - 1); }
-
-    /**
-     * \brief Returns the last integer
-     * 
-     * \return the last integer
-     */
-    uintmax_t back() const { return get(size_ - 1); }
-
-    /**
      * \brief Reports the bit width of the contained integers
      *
      * \return the bit width of the contained integers
@@ -369,14 +293,6 @@ public:
      * \return the number of integers that fit into the allocated memory
      */
     size_t capacity() const { return capacity_; }
-
-    /**
-     * \brief Tests whether the vector is empty
-     * 
-     * \return true if the size equals zero
-     * \return false otherwise
-     */
-    bool empty() const { return size_ == 0; }
 };
 
 }

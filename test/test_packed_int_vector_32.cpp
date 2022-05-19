@@ -6,7 +6,7 @@
 namespace pdinklag::test::packed_int_vector {
 
 using PackedIntVector = pdinklag::PackedIntVector<uint32_t>;
-constexpr size_t MAX_WIDTH = 31;
+constexpr size_t MAX_WIDTH = 32;
 
 #include "test_packed_int_vector_impl.hpp"
 

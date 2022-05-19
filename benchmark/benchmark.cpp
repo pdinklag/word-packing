@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <packed_int_vector.hpp>
+#include <packed_fixed_int_vector.hpp>
 #include <uint_min.hpp>
 
 // --- BENCHMARK SETUP ---
@@ -149,6 +150,11 @@ void run_benchmark() {
     {
         pdinklag::PackedIntVector<Uint> pvec(N, bits);
         benchmark_container(pvec).print("PackedIntVector", bits);
+    }
+
+    {
+        pdinklag::PackedFixedIntVector<bits, Uint> pvec(N);
+        benchmark_container(pvec).print("PackedFixedIntVector", bits);
     }
 
     if constexpr(bits == 1)

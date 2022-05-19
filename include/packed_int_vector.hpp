@@ -4,6 +4,7 @@
 #include "int_container_helpers.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <cassert>
 #include <limits>
 
@@ -28,6 +29,7 @@ template<std::unsigned_integral PackWord = uintmax_t>
 class PackedIntVector : public IntContainer<PackedIntVector<PackWord>> {
 private:
     static constexpr size_t PACK_WORD_BITS = std::numeric_limits<PackWord>::digits;
+    static_assert(std::popcount(PACK_WORD_BITS) == 1, "the number of bits of a PACK_WORD_BITS must be a power of two");
     static constexpr size_t PACK_WORD_MAX = std::numeric_limits<PackWord>::max();
 
     size_t size_;
@@ -70,7 +72,10 @@ public:
     PackedIntVector(size_t size, size_t width) : size_(size), capacity_(size), width_(width), mask_(PACK_WORD_MAX >> (PACK_WORD_BITS - width)) {
         assert(width_ > 0);
         assert(width_ <= PACK_WORD_BITS);
-        data_ = allocate_pack_words<PackWord>(capacity_, width_);
+
+        if(capacity_ > 0) {
+            data_ = allocate_pack_words<PackWord>(capacity_, width_);
+        }
     }
 
     /**
@@ -115,14 +120,18 @@ public:
         size_t const a = j / PACK_WORD_BITS;                   // left border
         size_t const b = (j + width_ - 1ULL) / PACK_WORD_BITS; // right border
         if(a < b) {
+            assert(width_ > 1);
+
             // the bits are the suffix of data_[a] and prefix of data_[b]
             size_t const da = j & (PACK_WORD_BITS - 1);
+            assert(da < PACK_WORD_BITS);
             size_t const wa = PACK_WORD_BITS - da;
+            assert(wa > 0);
             size_t const wb = width_ - wa;
-            size_t const db = PACK_WORD_BITS - wb;
+            assert(wb > 0);
 
             // combine the da lowest bits from a and the wa lowest bits of v
-            uintmax_t const a_lo = data_[a] & low_mask(da);
+            uintmax_t const a_lo = data_[a] & low_mask0(da);
             uintmax_t const v_lo = v & low_mask(wa);
             data_[a] = (v_lo << da) | a_lo;
 
@@ -132,9 +141,10 @@ public:
             data_[b] = (b_hi << wb) | v_hi;
         } else {
             size_t const dl = j & (PACK_WORD_BITS - 1);
+            assert(dl < PACK_WORD_BITS);
             uintmax_t const xa = data_[a];
-            uintmax_t const mask_lo = low_mask(dl);
-            uintmax_t const mask_hi = ~mask_lo << width_;
+            uintmax_t const mask_lo = low_mask0(dl);
+            uintmax_t const mask_hi = ~mask_lo << (width_-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
             data_[a] = (xa & mask_lo) | (v << dl) | (xa & mask_hi);
         }
     }

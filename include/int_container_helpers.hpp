@@ -186,8 +186,12 @@ public:
     bool empty() const { return impl->size() == 0; }
 };
 
-constexpr uintmax_t low_mask(size_t const num) {
-    return ~((UINTMAX_MAX << (num - 1)) << 1); // nb: num > 0 is assumed!
+constexpr uintmax_t low_mask(size_t const bits) {
+    return ~((UINTMAX_MAX << (bits - 1)) << 1); // nb: bits > 0 is assumed!
+}
+
+constexpr uintmax_t low_mask0(size_t const bits) {
+    return ~(UINTMAX_MAX << bits); // nb: bits < max bits is assumed!
 }
 
 constexpr size_t idiv_ceil(size_t const a, size_t const b) {

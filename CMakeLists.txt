@@ -11,8 +11,10 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 add_library(word-packing INTERFACE)
 target_include_directories(word-packing INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# provide tests if standalone
+# provide tests and benchmark if standalone
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     enable_testing()
     add_subdirectory(test)
+
+    add_subdirectory(benchmark)
 endif()

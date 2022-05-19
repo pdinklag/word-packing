@@ -119,12 +119,15 @@ public:
         size_t const j = i * width_;
         size_t const a = j / PACK_WORD_BITS;                   // left border
         size_t const b = (j + width_ - 1ULL) / PACK_WORD_BITS; // right border
+
+        // get starting position of relevant bit block within data_[a]
+        size_t const da = j & (PACK_WORD_BITS - 1);
+        assert(da < PACK_WORD_BITS);
+
         if(a < b) {
+            // the bits are the suffix of data_[a] and prefix of data_[b]
             assert(width_ > 1);
 
-            // the bits are the suffix of data_[a] and prefix of data_[b]
-            size_t const da = j & (PACK_WORD_BITS - 1);
-            assert(da < PACK_WORD_BITS);
             size_t const wa = PACK_WORD_BITS - da;
             assert(wa > 0);
             size_t const wb = width_ - wa;
@@ -140,12 +143,11 @@ public:
             uintmax_t const v_hi = v >> wa;
             data_[b] = (b_hi << wb) | v_hi;
         } else {
-            size_t const dl = j & (PACK_WORD_BITS - 1);
-            assert(dl < PACK_WORD_BITS);
+            // the bits are an infix of data_[a]
             uintmax_t const xa = data_[a];
-            uintmax_t const mask_lo = low_mask0(dl);
+            uintmax_t const mask_lo = low_mask0(da);
             uintmax_t const mask_hi = ~mask_lo << (width_-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
-            data_[a] = (xa & mask_lo) | (v << dl) | (xa & mask_hi);
+            data_[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
         }
     }
 

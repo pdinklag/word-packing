@@ -1,6 +1,7 @@
 #ifndef _INT_CONTAINER_HELPERS_HPP
 #define _INT_CONTAINER_HELPERS_HPP
 
+#include <cassert>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>

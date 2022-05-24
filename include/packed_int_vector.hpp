@@ -1,7 +1,7 @@
 #ifndef _PACKED_INT_VECTOR_HPP
 #define _PACKED_INT_VECTOR_HPP
 
-#include "int_container_helpers.hpp"
+#include "int_container_impl.hpp"
 
 #include <algorithm>
 #include <bit>
@@ -18,8 +18,7 @@ using namespace word_packing_internals;
  * This class packs integers of arbitrary bit width into a consecutive array of words, which can be used to save space.
  * However, accessing packed integers is substantially slower than aligned accesses due to the required arithmetics.
  * 
- * Use this class if the width of the contained integer is known only at runtime.
- * If the width is already known at compile time, use \ref PackedFixedIntVector to utilize a speedup through compiler optimizations.
+ * Use this class if the width of the contained integers is known only at runtime.
  * 
  * The supported bit widths range from 1 to the width of the pack word type.
  * 
@@ -84,28 +83,7 @@ public:
      * \param i the index of the integer
      * \return the integer at the given index
      */
-    uintmax_t get(size_t i) const {
-        size_t const j = i * width_;
-        size_t const a = j / PACK_WORD_BITS;                   // left border
-        size_t const b = (j + width_ - 1ULL) / PACK_WORD_BITS; // right border
-
-        // da is the distance of a's relevant bits from the left border
-        size_t const da = j & (PACK_WORD_BITS - 1);
-
-        // wa is the number of a's relevant bits
-        size_t const wa = PACK_WORD_BITS - da;
-
-        // get the wa highest bits from a
-        uintmax_t const a_hi = data_[a] >> da;
-
-        // get b (its high bits will be masked away below)
-        // NOTE: we could save this step if we knew a == b,
-        //       but the branch caused by checking that is too expensive
-        uintmax_t const b_lo = data_[b];
-
-        // combine
-        return ((b_lo << wa) | a_hi) & mask_;
-    }
+    uintmax_t get(size_t i) const { return get_rt<PackWord>(i, data_.get(), width_, mask_); }
 
     /**
      * \brief Writes a specific integer in the vector
@@ -113,43 +91,7 @@ public:
      * \param i the index of the integer
      * \param x the value to write to the specified index
      */
-    void set(size_t i, uintmax_t x) {
-        uintmax_t const v = x & mask_; // make sure it fits...
-        
-        size_t const j = i * width_;
-        size_t const a = j / PACK_WORD_BITS;                   // left border
-        size_t const b = (j + width_ - 1ULL) / PACK_WORD_BITS; // right border
-
-        // get starting position of relevant bit block within data_[a]
-        size_t const da = j & (PACK_WORD_BITS - 1);
-        assert(da < PACK_WORD_BITS);
-
-        if(a == b) {
-            // the bits are an infix of data_[a]
-            uintmax_t const xa = data_[a];
-            uintmax_t const mask_lo = low_mask0(da);
-            uintmax_t const mask_hi = ~mask_lo << (width_-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
-            data_[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
-        } else {
-            // the bits are the suffix of data_[a] and prefix of data_[b]
-            assert(width_ > 1);
-
-            size_t const wa = PACK_WORD_BITS - da;
-            assert(wa > 0);
-            size_t const wb = width_ - wa;
-            assert(wb > 0);
-
-            // combine the da lowest bits from a and the wa lowest bits of v
-            uintmax_t const a_lo = data_[a] & low_mask0(da);
-            uintmax_t const v_lo = v & low_mask(wa);
-            data_[a] = (v_lo << da) | a_lo;
-
-            // combine the db highest bits of b and the wb highest bits of v
-            uintmax_t const b_hi = data_[b] >> wb;
-            uintmax_t const v_hi = v >> wa;
-            data_[b] = (b_hi << wb) | v_hi;
-        }
-    }
+    void set(size_t i, uintmax_t x) { set_rt<PackWord>(i, x, data_.get(), width_, mask_); }
 
     /**
      * \brief Ensures that the vector's capacity fits at least the specified number of integers.

@@ -2,7 +2,6 @@
 #define _PACKED_FIXED_INT_VECTOR_HPP
 
 #include "int_container_impl.hpp"
-#include "uint_min.hpp"
 
 #include <algorithm>
 #include <bit>
@@ -26,7 +25,7 @@ using namespace word_packing_internals;
  * \tparam width_ the width per stored integer
  * \tparam PackWord the unsigned integer types to pack words into
  */
-template<size_t width_, std::unsigned_integral PackWord = UintMin<width_>>
+template<size_t width_, std::unsigned_integral PackWord = uintmax_t>
 class PackedFixedWidthIntVector : public IntContainer<PackedFixedWidthIntVector<width_, PackWord>> {
 private:
     static constexpr size_t PACK_WORD_BITS = std::numeric_limits<PackWord>::digits;

@@ -124,7 +124,13 @@ public:
         size_t const da = j & (PACK_WORD_BITS - 1);
         assert(da < PACK_WORD_BITS);
 
-        if(a < b) {
+        if(a == b) {
+            // the bits are an infix of data_[a]
+            uintmax_t const xa = data_[a];
+            uintmax_t const mask_lo = low_mask0(da);
+            uintmax_t const mask_hi = ~mask_lo << (width_-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
+            data_[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
+        } else {
             // the bits are the suffix of data_[a] and prefix of data_[b]
             assert(width_ > 1);
 
@@ -142,12 +148,6 @@ public:
             uintmax_t const b_hi = data_[b] >> wb;
             uintmax_t const v_hi = v >> wa;
             data_[b] = (b_hi << wb) | v_hi;
-        } else {
-            // the bits are an infix of data_[a]
-            uintmax_t const xa = data_[a];
-            uintmax_t const mask_lo = low_mask0(da);
-            uintmax_t const mask_hi = ~mask_lo << (width_-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
-            data_[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
         }
     }
 

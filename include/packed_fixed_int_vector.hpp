@@ -38,6 +38,8 @@ private:
     static_assert(width_ <= PACK_WORD_BITS);
     static constexpr size_t mask_ = PACK_WORD_MAX >> (PACK_WORD_BITS - width_);
 
+    static constexpr bool aligned_ = (PACK_WORD_BITS % width_) == 0;
+
     size_t size_;
     size_t capacity_;
     std::unique_ptr<PackWord[]> data_;
@@ -85,24 +87,30 @@ public:
     uintmax_t get(size_t i) const {
         size_t const j = i * width_;
         size_t const a = j / PACK_WORD_BITS;                   // left border
-        size_t const b = (j + width_ - 1ULL) / PACK_WORD_BITS; // right border
 
         // da is the distance of a's relevant bits from the left border
         size_t const da = j & (PACK_WORD_BITS - 1);
 
-        // wa is the number of a's relevant bits
-        size_t const wa = PACK_WORD_BITS - da;
-
         // get the wa highest bits from a
         uintmax_t const a_hi = data_[a] >> da;
 
-        // get b (its high bits will be masked away below)
-        // NOTE: we could save this step if we knew a == b,
-        //       but the branch caused by checking that is too expensive
-        uintmax_t const b_lo = data_[b];
+        if constexpr(aligned_) {
+            // if we're aligned, we don't need to consider the next pack
+            return a_hi & mask_;
+        } else {
+            size_t const b = (j + width_ - 1ULL) / PACK_WORD_BITS; // right border
 
-        // combine
-        return ((b_lo << wa) | a_hi) & mask_;
+            // wa is the number of a's relevant bits
+            size_t const wa = PACK_WORD_BITS - da;
+
+            // get b (its high bits will be masked away below)
+            // NOTE: we could save this step if we knew a == b,
+            //       but the branch caused by checking that is too expensive
+            uintmax_t const b_lo = data_[b];
+
+            // combine
+            return ((b_lo << wa) | a_hi) & mask_;
+        }
     }
 
     /**
@@ -122,7 +130,13 @@ public:
         size_t const da = j & (PACK_WORD_BITS - 1);
         assert(da < PACK_WORD_BITS);
 
-        if(a < b) {
+        if(aligned_ || a == b) {
+            // the bits are an infix of data_[a]
+            uintmax_t const xa = data_[a];
+            uintmax_t const mask_lo = low_mask0(da);
+            uintmax_t const mask_hi = ~mask_lo << (width_-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
+            data_[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
+        } else {
             // the bits are the suffix of data_[a] and prefix of data_[b]
             assert(width_ > 1);
 
@@ -140,12 +154,6 @@ public:
             uintmax_t const b_hi = data_[b] >> wb;
             uintmax_t const v_hi = v >> wa;
             data_[b] = (b_hi << wb) | v_hi;
-        } else {
-            // the bits are an infix of data_[a]
-            uintmax_t const xa = data_[a];
-            uintmax_t const mask_lo = low_mask0(da);
-            uintmax_t const mask_hi = ~mask_lo << (width_-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
-            data_[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
         }
     }
 

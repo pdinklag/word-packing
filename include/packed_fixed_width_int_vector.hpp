@@ -27,7 +27,7 @@ using namespace word_packing_internals;
  * \tparam PackWord the unsigned integer types to pack words into
  */
 template<size_t width_, std::unsigned_integral PackWord = UintMin<width_>>
-class PackedFixedIntVector : public IntContainer<PackedFixedIntVector<width_, PackWord>> {
+class PackedFixedWidthIntVector : public IntContainer<PackedFixedWidthIntVector<width_, PackWord>> {
 private:
     static constexpr size_t PACK_WORD_BITS = std::numeric_limits<PackWord>::digits;
     static_assert(std::popcount(PACK_WORD_BITS) == 1, "the number of bits of a PACK_WORD_BITS must be a power of two");
@@ -48,15 +48,15 @@ public:
      * \brief Constructs an empty vector of size zero
      * 
      */
-    PackedFixedIntVector() : size_(0), capacity_(0) {
+    PackedFixedWidthIntVector() : size_(0), capacity_(0) {
     }
 
-    PackedFixedIntVector(PackedFixedIntVector&&) = default;
-    PackedFixedIntVector& operator=(PackedFixedIntVector&&) = default;
+    PackedFixedWidthIntVector(PackedFixedWidthIntVector&&) = default;
+    PackedFixedWidthIntVector& operator=(PackedFixedWidthIntVector&&) = default;
 
-    PackedFixedIntVector(PackedFixedIntVector const& other) { *this = other; }
+    PackedFixedWidthIntVector(PackedFixedWidthIntVector const& other) { *this = other; }
     
-    PackedFixedIntVector& operator=(PackedFixedIntVector const& other) {
+    PackedFixedWidthIntVector& operator=(PackedFixedWidthIntVector const& other) {
         size_ = other.size_;
         capacity_ = other.capacity_;
         data_ = allocate_pack_words<PackWord>(size_, width_);
@@ -71,7 +71,7 @@ public:
      * 
      * \param size the number of integers in the vector
      */
-    PackedFixedIntVector(size_t size) : size_(size), capacity_(size) {
+    PackedFixedWidthIntVector(size_t size) : size_(size), capacity_(size) {
         if(capacity_ > 0) {
             data_ = allocate_pack_words<PackWord>(capacity_, width_);
         }
@@ -104,7 +104,7 @@ public:
     void reserve(size_t capacity) {
         if(capacity > capacity_) {
             // allocate a new vector and copy data
-            PackedFixedIntVector new_vec(capacity);
+            PackedFixedWidthIntVector new_vec(capacity);
             std::copy(data(), data() + pack_word_count<PackWord>(size_, width_), new_vec.data());
             new_vec.resize(size_); // this does nothing but set the size of the new vector
             *this = std::move(new_vec);
@@ -118,7 +118,7 @@ public:
     void shrink_to_fit() {
         if(size_ < capacity_) {
             // allocate a new vector and copy data
-            PackedFixedIntVector new_vec(size_);
+            PackedFixedWidthIntVector new_vec(size_);
             std::copy(data(), data() + pack_word_count<PackWord>(size_, width_), new_vec.data());
             for(size_t i = 0; i < size_; i++) new_vec.set(i, get(i)); // TODO: copy pack words instead of individual integers
             *this = std::move(new_vec);
@@ -138,7 +138,7 @@ public:
             size_ = size;
         } else {
             // allocate a new vector
-            PackedFixedIntVector new_vec(size);
+            PackedFixedWidthIntVector new_vec(size);
 
             size_t const copy_num = std::min(size_, size);
             

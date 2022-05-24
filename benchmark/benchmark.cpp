@@ -13,7 +13,7 @@
 // --- BENCHMARK SETUP ---
 
 // the benchmark size
-constexpr size_t N = 10'000'000;
+constexpr size_t N = 100'000'000;
 
 // the index type
 using Index = uint32_t;
@@ -23,9 +23,9 @@ static_assert((size_t)std::numeric_limits<Index>::max() >= N, "Index type too sm
 constexpr size_t SEED = 147;
 
 // ---
-uintmax_t VALUES[N];
+uintmax_t* VALUES;
 uintmax_t CHECKSUM;
-Index INDICES[N];
+Index* INDICES;
 
 class Stopwatch {
 private:
@@ -179,6 +179,10 @@ void run_benchmarks() {
 }
 
 int main(int argc, char** argv) {
+    // allocate
+    VALUES = new uintmax_t[N];
+    INDICES = new Index[N];
+
     // generate random index sequence
     {
         std::cout << "# generating random access index sequence ... ";
@@ -194,5 +198,10 @@ int main(int argc, char** argv) {
     }
 
     run_benchmarks();
+
+    // clean up
+    delete[] INDICES;
+    delete[] VALUES;
+
     return 0;
 }

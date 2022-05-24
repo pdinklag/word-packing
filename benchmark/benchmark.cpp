@@ -187,7 +187,7 @@ void run_benchmark() {
     if constexpr(bits == 1)
     {
         std::vector<bool> bv(N);
-        benchmark_container(bv).print("std::vector<bool>", bits);
+        benchmark_container(bv).print("std::vector", bits);
     }
 
     if constexpr(bits == 8 || bits == 16 || bits == 32 || bits == 64)

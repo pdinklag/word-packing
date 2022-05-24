@@ -134,6 +134,22 @@ All random numbers are pregenerated and not included in the measurement; the onl
 
 Note that on a 64-bit machine, **the benchmark requires 20N bytes &approx; 1.9 GiB of RAM**.
 
+### Results
+
+We have performed the benchmark on different systems with the following processors:
+
+1. Intel Xeon E5-2640 v4 ([view plots](figures/benchmark-results/xeon.pdf)) ([view raw results](figures/benchmark-results/xeon.txt))
+2. Intel Core i7-8700 ([view plots](figures/benchmark-results/i7.pdf)) ([view raw results](figures/benchmark-results/i7.txt))
+3. AMD EPYC 7452 ([view plots](figures/benchmark-results/epyc.pdf)) ([view raw results](figures/benchmark-results/epyc.txt))
+
+Please use the links to view the raw results (output of three iterations concatenated) or some precompiled plots (showing the average over all 3 iterations). In the plots, we compute the read / write throughputs for selected integer widths; for other widths, the results are very similar.
+
+We observe roughly the following (this is heavily summarized):
+
+* In the cases where direct comparisons to `std::vector` are possible (bit widths 1, 8, 16, 32 and 64), the *PackedFixedWidthIntVector* is only marginally slower than `std::vector`, while the *PackedIntVector* is notably slower (up to a factor of 3).
+* In aligned cases other than the above, where the integer width divides 64 (bit widths 2 and 4), the *PackedFixedWidthIntVector* is at least 50% faster than *PackedIntVector*.
+* In all other cases, *PackedFixedWidthIntVector* achieves roughly a 5% speedup over *PackedIntVector*.
+
 ### Building & Running
 
 Using CMake, you can build and run the benchmark using the following chain of commands in the repository root:

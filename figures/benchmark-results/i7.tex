@@ -1,0 +1,68 @@
+\include{header}
+
+% IMPORT-DATA data i7.txt
+
+\begin{document}
+
+\begin{tikzpicture}
+\begin{axis}[bench, title={Sequential Read}]
+%% MULTIPLOT(container) SELECT w as x, n / AVG(time_get_seq) AS y, container
+%% FROM data
+%% WHERE w = 1 OR w = 4 OR w = 8 OR w = 12 OR w = 16 OR w = 20 OR w = 24 OR w = 32 OR w = 40 OR w = 48 OR w = 56 OR w = 64
+%% GROUP BY MULTIPLOT, x
+\addplot coordinates { (1,1.42857e+06) (4,1.70455e+06) (8,5.88235e+06) (12,835655) (16,5.66038e+06) (20,1.19522e+06) (24,1.16732e+06) (32,2.52101e+06) (40,1.12782e+06) (48,1.1236e+06) (56,1.0989e+06) (64,2.0979e+06) };
+\addlegendentry{container=PackedFixedWidthIntVector};
+\addplot coordinates { (1,715990) (4,710900) (8,704225) (12,928793) (16,911854) (20,1.0989e+06) (24,1.0989e+06) (32,1.07143e+06) (40,1.08303e+06) (48,1.05634e+06) (56,1.03448e+06) (64,1.0101e+06) };
+\addlegendentry{container=PackedIntVector};
+\addplot coordinates { (1,1.43541e+06) (8,5.76923e+06) (16,5.66038e+06) (32,3.57143e+06) (64,2.0979e+06) };
+\addlegendentry{container=std::vector};
+\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+\begin{axis}[bench, title={Sequential Write}]
+%% MULTIPLOT(container) SELECT w as x, n / AVG(time_set_seq) AS y, container
+%% FROM data
+%% WHERE w = 1 OR w = 4 OR w = 8 OR w = 12 OR w = 16 OR w = 20 OR w = 24 OR w = 32 OR w = 40 OR w = 48 OR w = 56 OR w = 64
+%% GROUP BY MULTIPLOT, x
+\addplot coordinates { (1,669643) (4,700935) (8,1.20968e+06) (12,507614) (16,1.35747e+06) (20,511945) (24,445765) (32,955414) (40,481541) (48,495050) (56,450450) (64,663717) };
+\addlegendentry{container=PackedFixedWidthIntVector};
+\addplot coordinates { (1,462963) (4,506757) (8,512821) (12,475436) (16,544465) (20,470219) (24,472441) (32,544465) (40,455235) (48,462250) (56,424929) (64,531915) };
+\addlegendentry{container=PackedIntVector};
+\addplot coordinates { (1,232198) (8,1.21951e+06) (16,1.33929e+06) (32,967742) (64,642398) };
+\addlegendentry{container=std::vector};
+\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+\begin{axis}[bench, title={Random Read}]
+%% MULTIPLOT(container) SELECT w as x, n / AVG(time_get_rnd) AS y, container
+%% FROM data
+%% WHERE w = 1 OR w = 4 OR w = 8 OR w = 12 OR w = 16 OR w = 20 OR w = 24 OR w = 32 OR w = 40 OR w = 48 OR w = 56 OR w = 64
+%% GROUP BY MULTIPLOT, x
+\addplot coordinates { (1,181159) (4,112824) (8,120822) (12,67842.6) (16,112275) (20,91771.2) (24,89525.5) (32,107991) (40,90826.5) (48,92449.9) (56,91296.4) (64,106990) };
+\addlegendentry{container=PackedFixedWidthIntVector};
+\addplot coordinates { (1,113636) (4,73673.9) (8,68712.8) (12,67159.2) (16,66401.1) (20,89259.1) (24,88417.3) (32,87796.3) (40,87310.8) (48,87489.1) (56,86755.3) (64,89392.1) };
+\addlegendentry{container=PackedIntVector};
+\addplot coordinates { (1,197239) (8,120482) (16,111193) (32,107875) (64,105634) };
+\addlegendentry{container=std::vector};
+\end{axis}
+\end{tikzpicture}
+
+\begin{tikzpicture}
+\begin{axis}[bench, title={Random Write}]
+%% MULTIPLOT(container) SELECT w as x, n / AVG(time_set_rnd) AS y, container
+%% FROM data
+%% WHERE w = 1 OR w = 4 OR w = 8 OR w = 12 OR w = 16 OR w = 20 OR w = 24 OR w = 32 OR w = 40 OR w = 48 OR w = 56 OR w = 64
+%% GROUP BY MULTIPLOT, x
+\addplot coordinates { (1,109769) (4,65948.6) (8,78206.5) (12,46707.1) (16,74813) (20,45018) (24,45344.6) (32,72098.1) (40,44391.8) (48,45099.2) (56,41073.4) (64,73873.4) };
+\addlegendentry{container=PackedFixedWidthIntVector};
+\addplot coordinates { (1,74552.7) (4,52603.9) (8,49726.5) (12,45365.2) (16,52065.3) (20,43808.4) (24,43731.8) (32,50795.8) (40,42468.9) (48,43115.8) (56,39777.2) (64,50718.5) };
+\addlegendentry{container=PackedIntVector};
+\addplot coordinates { (1,126957) (8,79428.1) (16,73673.9) (32,73313.8) (64,73764.4) };
+\addlegendentry{container=std::vector};
+\end{axis}
+\end{tikzpicture}
+
+\end{document}
+

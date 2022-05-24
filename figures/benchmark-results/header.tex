@@ -1,0 +1,92 @@
+\PassOptionsToPackage{dvipsnames}{xcolor}
+\documentclass[tikz]{standalone}
+\usepackage[utf8]{inputenc}
+
+% Maths
+\usepackage{amsfonts}
+\usepackage{mathtools}
+
+% TikZ + pgfplots
+\usepackage{tikz,pgfplots}
+\usepgfplotslibrary{groupplots}
+
+\pgfplotscreateplotcyclelist{barcolors}{
+    black, fill=Green \\
+    black, fill=Cyan \\
+    black, fill=Gray \\
+    black, fill=Dandelion \\
+    black, fill=RubineRed \\
+    black, fill=YellowGreen \\
+    black, fill=RoyalBlue \\
+    black, fill=Orange \\
+    black, fill=Periwinkle \\
+    black, fill=Lavender \\
+    black, fill=Tan \\
+    black, fill=RawSienna \\
+    black, fill=Salmon \\
+    black, fill=Green \\
+    black, fill=Purple \\
+    black, fill=Gray \\
+}
+
+\pgfplotsset{
+    compat=newest,
+    major grid style={thin,dotted=black!50},
+    minor grid style={thin,dotted,color=black!50},
+    width=150mm,
+    height=100mm,
+    xlabel near ticks,
+    ylabel near ticks,
+    every axis/.append style={
+        line width=0.5pt,
+    },
+    every tick label/.append style={font=\scriptsize},
+    every axis label/.style={font=\scriptsize},
+    y tick label style={
+        xshift=0.5ex,
+    },
+    x label style={
+        yshift=0.5ex,
+    },
+    y label style={
+        yshift=-0.5ex,
+    },
+    legend cell align={left},
+    legend columns=2,
+    legend style={
+        inner sep=0.125ex,
+        outer sep=0,
+        column sep=0,
+        font=\scriptsize,
+        anchor=north,
+        /tikz/every even column/.append style={column sep=3mm,black},
+        /tikz/every odd column/.append style={black},
+        at={(0.5,-0.125)},
+    },
+    singlepage/.style={
+        width=600pt,
+        height=300pt,
+    },
+    ybarchart/.style={
+        ymajorgrids,
+        ybar=0pt,
+        bar width=4pt,
+        cycle list name={barcolors},
+    },
+    ytput/.style={
+        ylabel={Throughput [\# / ms]},
+        ymin=0,
+    },
+    xbitsperint/.style={
+        xlabel={Bits per integer},
+        symbolic x coords={1,4,8,12,16,20,24,32,40,48,56,64},
+        xtick={1,4,8,12,16,20,24,32,40,48,56,64},
+    },
+    bench/.style={
+        singlepage,
+        ybarchart,
+        ytput,
+        xbitsperint
+    }
+}
+

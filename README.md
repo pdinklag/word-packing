@@ -128,7 +128,7 @@ A useful companion on this path is the `num_packs_required` function, which will
 auto const bufsize = pdinklag::num_packs_required<uint64_t>(100, 7);
 uint64_t buffer[bufsize];
 
-pdinklag::PackedIntAccess(buffer, 7);
+pdinklag::PackedIntAccess iv(buffer, 7);
 for(int i = 0; i < 100; i++) {
     iv[i] = i;
 }

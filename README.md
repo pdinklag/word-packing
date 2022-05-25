@@ -127,7 +127,7 @@ Both vectors offer to specify the unsigned integer type used to pack integers in
 Use this class if the integer width is known already at compile time. It needs to be passed to the constructor.
 
 ```cpp
-#include <packed_int_vector.hpp>
+#include <word_packing.hpp>
 // ...
 
 // we compute the first 20 Fibonacci numbers, which fit into 13 bits each
@@ -150,7 +150,7 @@ fib.resize(22, 14); // after this operation, each integer has width 14 bits
 Use this class if the integer width is known already at compile time. It is passed as a template parameter.
 
 ```cpp
-#include <packed_fixed_width_int_vector.hpp>
+#include <word_packing.hpp>
 // ...
 
 // we compute the first 20 Fibonacci numbers, which fit into 13 bits each
@@ -167,7 +167,7 @@ for(int i = 2; i < 20; i++) {
 Sometimes, it is desirable to work with the smallest natively supported integer type that fits a certain number of bits. An example would be to use it as the pack type and minimize waste. This can be selected using `std::conditional`. This library provides a convenience type used like so:
 
 ```cpp
-#include <uint_min.hpp>
+#include <word_packing/uint_min.hpp>
 // ...
 using uint7 =  word_packing::UintMin<7>;  // resolves to uint8_t
 using uint12 = word_packing::UintMin<12>; // resolves to uint16_t
@@ -235,7 +235,7 @@ The output consists of lines containing pairs of keys and values as described in
 
 ## Implementation
 
-The core implementation of reading and writing packed containers is found in the internal `get` and `set` overloads in `word_packing_impl.hpp` and consists of all the bit twiddling you would imagine. Generally, regarding word packing, consider the following figure:
+The core implementation of reading and writing packed containers is found in the internal `get` and `set` overloads in `word_packing/internal/impl.hpp` and consists of all the bit twiddling you would imagine. Generally, regarding word packing, consider the following figure:
 
 ![figures/layout.png](figures/layout.png)
 

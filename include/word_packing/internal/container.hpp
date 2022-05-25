@@ -1,5 +1,5 @@
 /**
- * word_packing_container.hpp
+ * word_packing/internal/container.hpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -25,10 +25,10 @@
  * SOFTWARE.
  */
 
-#ifndef _WORD_PACKING_CONTAINER_HPP
-#define _WORD_PACKING_CONTAINER_HPP
+#ifndef _WORD_PACKING_INTERNAL_CONTAINER_HPP
+#define _WORD_PACKING_INTERNAL_CONTAINER_HPP
 
-#include "word_packing_impl.hpp"
+#include "impl.hpp"
 #include "int_ref.hpp"
 
 namespace word_packing::internal {

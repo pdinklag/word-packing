@@ -1,5 +1,5 @@
 /**
- * uint_min.hpp
+ * word_packing/internal/util.hpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -25,31 +25,24 @@
  * SOFTWARE.
  */
 
-#ifndef _UINT_MIN_HPP
-#define _UINT_MIN_HPP
+#ifndef _WORD_PACKING_INTERNAL_UTIL_HPP
+#define _WORD_PACKING_INTERNAL_UTIL_HPP
 
+#include <cstddef>
 #include <cstdint>
-#include <type_traits>
 
-namespace word_packing {
+namespace word_packing::internal {
+    constexpr uintmax_t low_mask(size_t const bits) {
+        return ~((UINTMAX_MAX << (bits - 1)) << 1); // nb: bits > 0 is assumed!
+    }
 
-/**
- * \brief The minimum unsigned integer type that consists of at least the specified number of bits
- * 
- * This only supports up to 64 bits.
- * 
- * \tparam bits the number of bits that the integer type must be able to fit
- */
-template<unsigned bits>
-using UintMin =
-    typename std::conditional<(bits > 64), void,
-        typename std::conditional<(bits > 32), uint64_t,
-            typename std::conditional<(bits > 16), uint32_t,
-                typename std::conditional<(bits > 8), uint16_t, uint8_t>::type
-            >::type
-        >::type
-    >::type;
+    constexpr uintmax_t low_mask0(size_t const bits) {
+        return ~(UINTMAX_MAX << bits); // nb: bits < max bits is assumed!
+    }
 
+    constexpr size_t idiv_ceil(size_t const a, size_t const b) {
+        return ((a + b) - 1ULL) / b;
+    }
 }
 
 #endif

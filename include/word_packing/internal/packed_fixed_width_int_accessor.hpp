@@ -1,5 +1,5 @@
 /**
- * packed_fixed_width_int_accessor.hpp
+ * word_packing/internal/packed_fixed_width_int_accessor.hpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -28,7 +28,7 @@
 #ifndef _PACKED_FIXED_WIDTH_INT_ACCESSOR_HPP
 #define _PACKED_FIXED_WIDTH_INT_ACCESSOR_HPP
 
-#include "word_packing_impl.hpp"
+#include "impl.hpp"
 #include "int_ref.hpp"
 
 namespace word_packing::internal {

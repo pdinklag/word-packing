@@ -28,10 +28,8 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
-#include <packed_int_vector.hpp>
-#include <packed_fixed_width_int_vector.hpp>
 #include <word_packing.hpp>
-#include <uint_min.hpp>
+#include <word_packing/uint_min.hpp>
 
 namespace word_packing::test::examples {
 

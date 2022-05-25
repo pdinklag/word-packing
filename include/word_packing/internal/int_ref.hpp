@@ -1,5 +1,5 @@
 /**
- * int_ref.hpp
+ * word_packing/internal/int_ref.hpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -25,8 +25,8 @@
  * SOFTWARE.
  */
 
-#ifndef _INT_REF_HPP
-#define _INT_REF_HPP
+#ifndef _WORD_PACKING_INTERNAL_INT_REF_HPP
+#define _WORD_PACKING_INTERNAL_INT_REF_HPP
 
 #include <cstddef>
 #include <cstdint>

@@ -33,9 +33,8 @@
 #include <random>
 #include <vector>
 
-#include <packed_int_vector.hpp>
-#include <packed_fixed_width_int_vector.hpp>
-#include <uint_min.hpp>
+#include <word_packing.hpp>
+#include <word_packing/uint_min.hpp>
 
 // --- BENCHMARK SETUP ---
 

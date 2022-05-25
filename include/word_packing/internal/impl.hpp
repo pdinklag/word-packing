@@ -1,5 +1,5 @@
 /**
- * word_packing_impl.hpp
+ * word_packing/internal/_impl.hpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -25,10 +25,10 @@
  * SOFTWARE.
  */
 
-#ifndef _WORD_PACKING_IMPL_HPP
-#define _WORD_PACKING_IMPL_HPP
+#ifndef _WORD_PACKING_INTERNAL_IMPL_HPP
+#define _WORD_PACKING_INTERNAL_IMPL_HPP
 
-#include "word_packing_utils.hpp"
+#include "../util.hpp"
 
 #include <cassert>
 

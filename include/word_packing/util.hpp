@@ -1,5 +1,5 @@
 /**
- * word_packing_utils.hpp
+ * word_packing/util.hpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -25,28 +25,14 @@
  * SOFTWARE.
  */
 
-#ifndef _WORD_PACKING_UTILS_HPP
-#define _WORD_PACKING_UTILS_HPP
+#ifndef _WORD_PACKING_UTIL_HPP
+#define _WORD_PACKING_UTIL_HPP
 
 #include <bit>
 #include <concepts>
-#include <cstddef>
-#include <cstdint>
 #include <limits>
 
-namespace word_packing::internal {
-    constexpr uintmax_t low_mask(size_t const bits) {
-        return ~((UINTMAX_MAX << (bits - 1)) << 1); // nb: bits > 0 is assumed!
-    }
-
-    constexpr uintmax_t low_mask0(size_t const bits) {
-        return ~(UINTMAX_MAX << bits); // nb: bits < max bits is assumed!
-    }
-
-    constexpr size_t idiv_ceil(size_t const a, size_t const b) {
-        return ((a + b) - 1ULL) / b;
-    }
-}
+#include "internal/util.hpp"
 
 namespace word_packing {
 

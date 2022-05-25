@@ -28,12 +28,13 @@
 #ifndef _WORD_PACKING_HPP
 #define _WORD_PACKING_HPP
 
-#include "word_packing_impl.hpp"
+#include "word_packing/internal/impl.hpp"
 
-#include "packed_int_accessor.hpp"
-#include "packed_fixed_width_int_accessor.hpp"
-#include "packed_int_vector.hpp"
-#include "packed_fixed_width_int_vector.hpp"
+#include "word_packing/internal/packed_int_accessor.hpp"
+#include "word_packing/internal/packed_fixed_width_int_accessor.hpp"
+
+#include "word_packing/packed_int_vector.hpp"
+#include "word_packing/packed_fixed_width_int_vector.hpp"
 
 namespace word_packing {
 

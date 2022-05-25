@@ -49,7 +49,7 @@ namespace word_packing {
  * \return the accessor
  */
 template<WordPackEligible Pack>
-inline auto accessor(Pack const* data, size_t const width) { return internal::PackedIntConstAccessor(data, width); }
+inline auto accessor(Pack const* data, size_t const width) { return internal::PackedIntConstAccessor<Pack>(data, width); }
 
 /**
  * \brief Provides an accessor to packed words of the given bit width contained in the given pack buffer
@@ -62,7 +62,7 @@ inline auto accessor(Pack const* data, size_t const width) { return internal::Pa
  * \return the accessor
  */
 template<WordPackEligible Pack>
-inline auto accessor(Pack* data, size_t const width) { return internal::PackedIntAccessor(data, width); }
+inline auto accessor(Pack* data, size_t const width) { return internal::PackedIntAccessor<Pack>(data, width); }
 
 /**
  * \brief Provides a read-only accessor to packed words of the given bit width contained in the given pack buffer
@@ -75,7 +75,7 @@ inline auto accessor(Pack* data, size_t const width) { return internal::PackedIn
  * \return the accessor
  */
 template<size_t width, WordPackEligible Pack>
-inline auto accessor(Pack const* data) { return internal::PackedFixedWidthIntConstAccessor<width>(data); }
+inline auto accessor(Pack const* data) { return internal::PackedFixedWidthIntConstAccessor<width, Pack>(data); }
 
 /**
  * \brief Provides an accessor to packed words of the given bit width contained in the given pack buffer
@@ -88,7 +88,7 @@ inline auto accessor(Pack const* data) { return internal::PackedFixedWidthIntCon
  * \return the accessor
  */
 template<size_t width, WordPackEligible Pack>
-inline auto accessor(Pack* data) { return internal::PackedFixedWidthIntAccessor<width>(data); }
+inline auto accessor(Pack* data) { return internal::PackedFixedWidthIntAccessor<width, Pack>(data); }
 
 }
 

@@ -1,5 +1,5 @@
 /**
- * int_container_impl.hpp
+ * word_packing.hpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -25,31 +25,77 @@
  * SOFTWARE.
  */
 
-#ifndef _INT_CONTAINER_IMPL_HPP
-#define _INT_CONTAINER_IMPL_HPP
+#ifndef _WORD_PACKING_HPP
+#define _WORD_PACKING_HPP
 
-#include "int_container_helpers.hpp"
+#include <bit>
+#include <cassert>
+#include <concepts>
+#include <limits>
 
-namespace pdinklag::word_packing_internals {
+namespace word_packing::internal {
+    constexpr uintmax_t low_mask0(size_t const bits) {
+        return ~(UINTMAX_MAX << bits); // nb: bits < max bits is assumed!
+    }
+
+    constexpr size_t idiv_ceil(size_t const a, size_t const b) {
+        return ((a + b) - 1ULL) / b;
+    }
+}
+
+namespace word_packing {
+
+/**
+ * \brief Computes a bit mask for extracting the given number of low bits from an integer
+ * 
+ * \param bits the number of low bits to extract; must be greater than 0
+ * \return a bit mask for extracting the given number of low bits from an integer
+ */
+constexpr uintmax_t low_mask(size_t const bits) {
+    return ~((UINTMAX_MAX << (bits - 1)) << 1); // nb: bits > 0 is assumed!
+}
+
+/**
+ * \brief Computes the number of packs required to store the given number of integers with the given bit width
+ * 
+ * \tparam Pack the word pack type
+ * \param num the number of packed integers
+ * \param width the bit width of each packed integer
+ * \return the number of packs required for storage
+ */
+template<std::unsigned_integral Pack>
+constexpr size_t num_packs_required(size_t const num, size_t const width) {
+    return internal::idiv_ceil(num * width, std::numeric_limits<Pack>::digits);
+}
+
+/**
+ * \brief Concept for types that are eligible as word packs
+ * 
+ * This requires the type to be an unsigned integral of bit width a power of two.
+ * 
+ * \tparam T the type in question
+ */
+template<typename T>
+concept WordPackEligible =
+    std::unsigned_integral<T> &&
+    std::popcount(unsigned(std::numeric_limits<T>::digits)) == 1; // word packs must have width a power of two
 
 /**
  * \brief Reads an integer from a packed container
  * 
- * This implementation is for the case where the width per integer is known only at runtime.
- * 
  * \tparam Pack the word pack type
- * \param i the index of the integer to read
  * \param data the array of word packs
+ * \param i the index of the integer to read
  * \param width the width per integer in the container
- * \param mask the precomputed mask for masking out the `width` low bits of an integer
+ * \param mask the precomputed mask for masking out the `width` low bits of an integer (\see low_mask)
  * \return the read integer
  */
 template<WordPackEligible Pack>
-inline uintmax_t get_rt(size_t const i, Pack const* data, size_t const width, size_t const mask) {
+inline uintmax_t get(Pack const* data, size_t const i, size_t const width, uintmax_t const mask) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
 
     size_t const j = i * width;
-    size_t const a = j / PACK_BITS;                   // left border
+    size_t const a = j / PACK_BITS;                  // left border
     size_t const b = (j + width - 1ULL) / PACK_BITS; // right border
 
     // da is the distance of a's relevant bits from the left border
@@ -70,23 +116,23 @@ inline uintmax_t get_rt(size_t const i, Pack const* data, size_t const width, si
     return ((b_lo << wa) | a_hi) & mask;
 }
 
+template<WordPackEligible Pack>
+inline uintmax_t get(Pack const* data, size_t const i, size_t const width) { return get(data, i, width, low_mask(width)); }
+
 /**
  * \brief Reads an integer from a packed container
  * 
- * This implementation is optimized for the case where the width per integer is already known at compile time.
- * 
  * \tparam Pack the word pack type
  * \tparam width the width per integer in the container
- * \param i the index of the integer to read
  * \param data the array of word packs
+ * \param i the index of the integer to read
  * \return the read integer
  */
-template<WordPackEligible Pack, size_t width>
-inline  uintmax_t get_ct(size_t const i, Pack const* data) {
+template<size_t width, WordPackEligible Pack>
+inline uintmax_t get(Pack const* data, size_t const i) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
-    constexpr size_t PACK_MAX = std::numeric_limits<Pack>::max();
 
-    constexpr size_t mask = low_mask(width);
+    constexpr uintmax_t mask = low_mask(width);
     constexpr bool aligned = (PACK_BITS % width) == 0;
 
     size_t const j = i * width;
@@ -120,18 +166,16 @@ inline  uintmax_t get_ct(size_t const i, Pack const* data) {
 /**
  * \brief Writes an integer in a packed container
  * 
- * This implementation is for the case where the width per integer is known only at runtime.
- * 
- * \tparam Pack the PACK_MAX type
+ * \tparam Pack the word pack type
+ * \param data the array of word packs
  * \param i the index of the integer to read
  * \param x the value to write
- * \param data the array of PACK_MAXs
  * \param width the width per integer in the container
- * \param mask the precomputed mask for masking out the `width` low bits of an integer
+ * \param mask the precomputed mask for masking out the `width` low bits of an integer (\see low_mask)
  * \return the read integer
  */
 template<WordPackEligible Pack>
-inline void set_rt(size_t const i, uintmax_t const x, Pack* data, size_t const width, size_t const mask) {
+inline void set(Pack* data, size_t const i, uintmax_t const x, size_t const width, uintmax_t const mask) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
 
     uintmax_t const v = x & mask; // make sure it fits...
@@ -147,7 +191,7 @@ inline void set_rt(size_t const i, uintmax_t const x, Pack* data, size_t const w
     if(a == b) {
         // the bits are an infix of data[a]
         uintmax_t const xa = data[a];
-        uintmax_t const mask_lo = low_mask0(da);
+        uintmax_t const mask_lo = internal::low_mask0(da);
         uintmax_t const mask_hi = ~mask_lo << (width-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
         data[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
     } else {
@@ -158,7 +202,7 @@ inline void set_rt(size_t const i, uintmax_t const x, Pack* data, size_t const w
         size_t const wb = width - wa;
 
         // combine the da lowest bits from a and the wa lowest bits of v
-        uintmax_t const a_lo = data[a] & low_mask0(da);
+        uintmax_t const a_lo = data[a] & internal::low_mask0(da);
         uintmax_t const v_lo = v & low_mask(wa);
         data[a] = (v_lo << da) | a_lo;
 
@@ -169,24 +213,25 @@ inline void set_rt(size_t const i, uintmax_t const x, Pack* data, size_t const w
     }
 }
 
+template<WordPackEligible Pack>
+inline void set(Pack* data, size_t const i, uintmax_t const x, size_t const width) { set(data, i, x, width, low_mask(width)); }
+
 /**
  * \brief Writes an integer to a packed container
  * 
- * This implementation is optimized for the case where the width per integer is already known at compile time.
- * 
- * \tparam Pack the PACK_MAX type
+ * \tparam Pack the word pack type
  * \tparam width the width per integer in the container
+ * \param data the array of word packs
  * \param i the index of the integer to read
  * \param x the value to write
- * \param data the array of PACK_MAXs
  * \return the read integer
  */
-template<WordPackEligible Pack, size_t width>
-inline void set_ct(size_t const i, uintmax_t const x, Pack* data) {
+template<size_t width, WordPackEligible Pack>
+inline void set(Pack* data, size_t const i, uintmax_t const x) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
     constexpr size_t PACK_MAX = std::numeric_limits<Pack>::max();
 
-    constexpr size_t mask = low_mask(width);
+    constexpr uintmax_t mask = low_mask(width);
     constexpr bool aligned = (PACK_BITS % width) == 0;
 
     uintmax_t const v = x & mask; // make sure it fits...
@@ -202,7 +247,7 @@ inline void set_ct(size_t const i, uintmax_t const x, Pack* data) {
     if(aligned || a == b) {
         // the bits are an infix of data_[a]
         uintmax_t const xa = data[a];
-        uintmax_t const mask_lo = low_mask0(da);
+        uintmax_t const mask_lo = internal::low_mask0(da);
         uintmax_t const mask_hi = ~mask_lo << (width-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
         data[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
     } else {
@@ -213,7 +258,7 @@ inline void set_ct(size_t const i, uintmax_t const x, Pack* data) {
         size_t const wb = width - wa;
 
         // combine the da lowest bits from a and the wa lowest bits of v
-        uintmax_t const a_lo = data[a] & low_mask0(da);
+        uintmax_t const a_lo = data[a] & internal::low_mask0(da);
         uintmax_t const v_lo = v & low_mask(wa);
         data[a] = (v_lo << da) | a_lo;
 

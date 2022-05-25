@@ -1,5 +1,5 @@
 /**
- * test_packed_int_vector_16.cpp
+ * test_access_64.cpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -28,42 +28,13 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
-#include <packed_int_vector.hpp>
-#include <packed_fixed_width_int_vector.hpp>
+#include <word_packing.hpp>
 
-#include <packed_int_access.hpp>
-#include <packed_fixed_width_int_access.hpp>
+namespace word_packing::test::packed_int_access {
 
-namespace pdinklag::test::word_packing {
+using Pack = uint64_t;
+constexpr size_t MAX_WIDTH = 64;
 
-constexpr uint64_t MAGIC_NUMBER = 0xFEDCBA9876543210ULL;
-
-TEST_SUITE("word_packing") {
-    TEST_CASE("packed_int_vector") {
-        PackedIntVector<> v(1, 64);
-        v[0] = MAGIC_NUMBER;
-        CHECK(v[0] == MAGIC_NUMBER);
-    }
-
-    TEST_CASE("packed_fixed_width_int_vector") {
-        PackedFixedWidthIntVector<64> v(1);
-        v[0] = MAGIC_NUMBER;
-        CHECK(v[0] == MAGIC_NUMBER);
-    }
-
-    TEST_CASE("packed_int_access") {
-        uint64_t data;
-        PackedIntAccess v(&data, 64);
-        v[0] = MAGIC_NUMBER;
-        CHECK(v[0] == MAGIC_NUMBER);
-    }
-
-    TEST_CASE("packed_fixed_width_int_access") {
-        uint64_t data;
-        PackedFixedWidthIntAccess<64, decltype(data)> v(&data);
-        v[0] = MAGIC_NUMBER;
-        CHECK(v[0] == MAGIC_NUMBER);
-    }
-}
+#include "test_access_impl.hpp"
 
 }

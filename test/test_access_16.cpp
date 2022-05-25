@@ -1,5 +1,5 @@
 /**
- * test_packed_int_access_impl.hpp
+ * test_access_16.cpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -25,28 +25,16 @@
  * SOFTWARE.
  */
 
-TEST_SUITE("packed_int_access") {
-    TEST_CASE("set and get") {
-        auto iota_test = [](size_t width){
-            size_t const num = 9'999;
-            auto const mask = low_mask(width);
-            uintmax_t const off = (1ULL << width) - num;
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "doctest.h"
 
-            Pack packs[pdinklag::num_packs_required<Pack>(num, width)];
-            auto v = pdinklag::PackedIntAccess(packs, width);
-            
-            CHECK(v.width() == width);
+#include <word_packing.hpp>
 
-            for(size_t i = 0; i < num; i++) {
-                v[i] = off + i;
-            }
+namespace word_packing::test::packed_int_access {
 
-            for(size_t i = 0; i < num; i++) {
-                auto const expect = (off + i) & mask;
-                CHECK(v[i] == expect);
-            }
-        };
+using Pack = uint16_t;
+constexpr size_t MAX_WIDTH = 16;
 
-        for(size_t w = 1; w <= MAX_WIDTH; w++) iota_test(w);
-    }
+#include "test_access_impl.hpp"
+
 }

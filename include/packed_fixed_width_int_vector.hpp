@@ -28,15 +28,12 @@
 #ifndef _PACKED_FIXED_INT_VECTOR_HPP
 #define _PACKED_FIXED_INT_VECTOR_HPP
 
-#include "int_container_impl.hpp"
+#include "word_packing_container.hpp"
 
 #include <algorithm>
-#include <cassert>
-#include <limits>
+#include <memory>
 
-namespace pdinklag {
-
-using namespace word_packing_internals;
+namespace word_packing {
 
 /**
  * \brief Vector of packed arbitrary-width (unsigned) integers (width known at compile time)
@@ -50,7 +47,7 @@ using namespace word_packing_internals;
  * \tparam Pack the unsigned integer type to pack words into
  */
 template<size_t width_, WordPackEligible Pack = uintmax_t>
-class PackedFixedWidthIntVector : public IntContainer<PackedFixedWidthIntVector<width_, Pack>> {
+class PackedFixedWidthIntVector : public internal::IntContainer<PackedFixedWidthIntVector<width_, Pack>> {
 private:
     static_assert(width_ > 0, "width cannot be zero");
     static_assert(width_ <= std::numeric_limits<Pack>::digits, "word pack width must be at list the word width");
@@ -71,11 +68,10 @@ public:
     PackedFixedWidthIntVector& operator=(PackedFixedWidthIntVector&&) = default;
 
     PackedFixedWidthIntVector(PackedFixedWidthIntVector const& other) { *this = other; }
-    
     PackedFixedWidthIntVector& operator=(PackedFixedWidthIntVector const& other) {
         size_ = other.size_;
         capacity_ = other.capacity_;
-        data_ = allocate_pack_words<Pack>(size_, width_);
+        data_ = std::make_unique<Pack[]>(num_packs_required<Pack>(size_, width_));
         std::copy(other.data(), other.data() + num_packs_required<Pack>(size_, width_), data());
         return *this;
     }
@@ -89,7 +85,7 @@ public:
      */
     PackedFixedWidthIntVector(size_t size) : size_(size), capacity_(size) {
         if(capacity_ > 0) {
-            data_ = allocate_pack_words<Pack>(capacity_, width_);
+            data_ = std::make_unique<Pack[]>(num_packs_required<Pack>(size_, width_));
         }
     }
 
@@ -99,15 +95,15 @@ public:
      * \param i the index of the integer
      * \return the integer at the given index
      */
-    uintmax_t get(size_t i) const { return get_ct<Pack, width_>(i, data_.get()); }
+    uintmax_t get(size_t i) const { return word_packing::get<width_>(data_.get(), i); }
 
     /**
      * \brief Writes a specific integer in the vector
      * 
      * \param i the index of the integer
-     * \param x the value to write to the specified index
+     * \param value the value to write to the specified index
      */
-    void set(size_t i, uintmax_t x) { set_ct<Pack, width_>(i, x, data_.get()); }
+    void set(size_t i, uintmax_t value) { word_packing::set<width_>(data_.get(), i, value); }
 
     /**
      * \brief Ensures that the vector's capacity fits at least the specified number of integers.

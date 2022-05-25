@@ -4,17 +4,12 @@ This header-only C++20 library provides implementations for vectors of packed (u
 
 Naturally, due to the fact that words are no longer aligned to hardware word sizes, access to packed vectors is slower than aligned access. To achieve access as fast as possible, depending on your use case, we recommend one of the corresponding implementations:
 
-| Word width known at &hellip; | Dynamic resizing required | Recommended Implementation                              | C++ / STL Counterpart |
-| ---------------------------- | ------------------------- | ------------------------------------------------------- | --------------------- |
-| Compile time                 | yes                       | [PackedFixedWidthIntVector](#packedfixedwidthintvector) | `std::vector`         |
-| Compile time                 | no                        | [PackedFixedWidthIntAccess](#packed-access-decorators)  | plain array           |
-| Runtime                      | yes                       | [PackedIntVector](#packedintvector)                     | `std::vector`         |
-| Runtime                      | no                        | [PackedWidthIntAccess](#packed-access-decorators)       | plain array           |
-
-
-
-* If your width per integer is *already known at compile time*, use [PackedFixedWidthIntVector](#packedfixedwidthintvector).
-* Otherwise, if your width is only known *at runtime*, use [PackedIntVector](#packedintvector).
+| Word width known at &hellip; | Dynamic resizing required | Recommended Implementation                              |
+| ---------------------------- | ------------------------- | ------------------------------------------------------- |
+| Compile time                 | yes                       | [PackedFixedWidthIntVector](#packedfixedwidthintvector) |
+| Compile time                 | no                        | [Direct API (Fixed Width)](#fixed-width-access)         |
+| Runtime                      | yes                       | [PackedIntVector](#packedintvector)                     |
+| Runtime                      | no                        | [Direct API](#direct-api)                               |
 
 ### Requirements
 
@@ -71,29 +66,66 @@ add_subdirectory(path/to/word-packing)
 
 You can then link against the `word-packing` interface library, which will automatically add the include directory to your target.
 
-### API
+### Direct API
 
-The API is mostly STL compatible; the classes can be used very much like `std::vector` and also use capacity doubling when growing. The most notable exception is that if you construct a packed integer vector with a given size or resize it, the allocated memory is *not* initialized.
+The main API consists of the free functions in the `word_packing` namespace. They allow treating any buffer of unsigned integers as a container of packed words via the `get` and `set` overloads.
+
+```cpp
+#include <word_packing.hpp>
+// ...
+
+// we compute the first 20 Fibonacci numbers, which fit into 13 bits each
+using Pack = uint64_t;
+size_t const bits = 13;
+auto const mask = word_packing::low_mask(bits); // precompute the bit mask to improve performance
+
+Pack fib[word_packing::num_packs_required<Pack>(20, bits)];
+word_packing::set(fib, 0, 0, bits, mask); // fib(1) = 0
+word_packing::set(fib, 1, 1, bits, mask); // fib(2) = 1
+for(int i = 2; i < 20; i++) {
+    auto fib_i2 = word_packing::get(fib, i-2, bits, mask);
+    auto fib_i1 = word_packing::get(fib, i-1, bits, mask);
+    word_packing::set(fib, i, fib_i2 + fib_i1, bits, mask); // fib(i) = fib(i-2) + fib(i-1)
+}
+```
+
+The precomputed bit mask can be left out. However, then, it needs to be recomputed for every access, which can be a factor in performance.
+
+#### Utilities
+
+In the example above, you will also notice the utility functions `low_mask` and `num_packs_required`, which are pretty much self-explanatory.
+
+#### Fixed Width Access
+
+If the width per integer is already known at compile time, it is recommended to use the overloads that make use of this fact.
+
+```cpp
+#include <word_packing.hpp>
+// ...
+
+// we compute the first 20 Fibonacci numbers, which fit into 13 bits each
+using Pack = uint64_t;
+constexpr size_t bits = 13;
+
+Pack fib[word_packing::num_packs_required<Pack>(20, bits)];
+word_packing::set<bits>(fib, 0, 0); // fib(1) = 0
+word_packing::set<bits>(fib, 1, 1); // fib(2) = 1
+for(int i = 2; i < 20; i++) {
+    auto fib_i2 = word_packing::get<bits>(fib, i-2);
+    auto fib_i1 = word_packing::get<bits>(fib, i-1);
+    word_packing::set<bits>(fib, i, fib_i2 + fib_i1); // fib(i) = fib(i-2) + fib(i-1)
+}
+```
+
+### Containers
+
+This library also provides containers that are mostly STL compatible; they can be used very much like `std::vector` and also use capacity doubling when growing. The most notable exception is that if you construct a packed integer vector with a given size or resize it, the allocated memory is *not* initialized.
 
 Both PackedFixedWidthIntVector and PackedIntVector support integer widths between 1 and the width of your widest available integer (`uintmax_t`), each including. That said, by using a width of 1, the vectors act like bit vectors similar `std::vector<bool>`. However, they have not been optimized for this case and a dedicated bit vector implementation is likely a better choice.
 
 When assigning integers, only the low bits corresponding container's integer width are actually stored. Let's say the container's integer width is 7, and you write the value 255 to some entry (which requires 8 bits), the actually stored integer is 127, corresponding to only the lowest 7 bits.
 
 Both vectors offer to specify the unsigned integer type used to pack integers into. For example, by choosing `uint16_t` as the pack type, values are packed into 16-bit integers. The width of a word pack must be at least the width of an integer in the container. By default, integers are packed into the widest natively supported integer type (`uintmax_t`).
-
-#### PackedFixedWidthIntVector
-
-Use this class if the integer width is known already at compile time. It is passed as a template parameter.
-
-```cpp
-#include <packed_fixed_width_int_vector.hpp>
-// ...
-
-pdinklag::PackedFixedWidthIntVector<7> iv(100);
-for(int i = 0; i < 100; i++) {
-    iv[i] = i;
-}
-```
 
 #### PackedIntVector
 
@@ -103,47 +135,48 @@ Use this class if the integer width is known already at compile time. It needs t
 #include <packed_int_vector.hpp>
 // ...
 
-pdinklag::PackedIntVector iv(100, 7);
-for(int i = 0; i < 100; i++) {
-    iv[i] = i;
+// we compute the first 20 Fibonacci numbers, which fit into 13 bits each
+word_packing::PackedIntVector fib(100, 13);
+fib[0] = 0;
+fib[1] = 1;
+for(int i = 2; i < 20; i++) {
+    fib[i] = fib[i-2] + fib[i-1];
 }
 ```
 
 It is possible to change the integer width at runtime using a special overload of `resize`:
 
 ```cpp
-iv.resize(100, 12); // after this operation, each integer has width 12 bits
+fib.resize(22, 14); // after this operation, each integer has width 14 bits
 ```
 
-#### Packed Access Decorators
+#### PackedFixedWidthIntVector
 
-In case you already have a buffer that you would simply like decorate with word packing, use the *PackedIntAccess* or *PackedFixedWidthIntAccess* class, respectively. These are bare bones in that they store nothing but a pointer. However, this makes them very lightweight and eligible for POD types.
-
-A useful companion on this path is the `num_packs_required` function, which will compute for you the number of packs required to store a given number of integers of given width.
+Use this class if the integer width is known already at compile time. It is passed as a template parameter.
 
 ```cpp
-#include <packed_int_access.hpp>
+#include <packed_fixed_width_int_vector.hpp>
 // ...
 
-auto const bufsize = pdinklag::num_packs_required<uint64_t>(100, 7);
-uint64_t buffer[bufsize];
-
-pdinklag::PackedIntAccess iv(buffer, 7);
-for(int i = 0; i < 100; i++) {
-    iv[i] = i;
+// we compute the first 20 Fibonacci numbers, which fit into 13 bits each
+word_packing::PackedFixedWidthIntVector<13> fib(20);
+fib[0] = 0;
+fib[1] = 1;
+for(int i = 2; i < 20; i++) {
+    fib[i] = fib[i-2] + fib[i-1];
 }
 ```
 
-#### UintMin
+### UintMin
 
 Sometimes, it is desirable to work with the smallest natively supported integer type that fits a certain number of bits. An example would be to use it as the pack type and minimize waste. This can be selected using `std::conditional`. This library provides a convenience type used like so:
 
 ```cpp
 #include <uint_min.hpp>
 // ...
-using uint7 = UintMin<7>;   // resolves to uint8_t
-using uint12 = UintMin<12>; // resolves to uint16_t
-using uint32 = UintMin<32>; // resolves to uint32_t
+using uint7 =  word_packing::UintMin<7>;  // resolves to uint8_t
+using uint12 = word_packing::UintMin<12>; // resolves to uint16_t
+using uint32 = word_packing::UintMin<32>; // resolves to uint32_t
 // ...
 ```
 
@@ -207,7 +240,7 @@ The output consists of lines containing pairs of keys and values as described in
 
 ## Implementation
 
-The core implementation of reading and writing packed containers is found in `int_container_impl.hpp` and consists of the bit twiddling you would imagine. Generally, consider the following figure:
+The core implementation of reading and writing packed containers is found in the [direct API](#direct-api) function overloads in `word_packing.hpp` and consists of all the bit twiddling you would imagine. Generally, regarding word packing, consider the following figure:
 
 ![figures/layout.png](figures/layout.png)
 

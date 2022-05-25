@@ -1,5 +1,5 @@
 /**
- * test_packed_int_vector_8.cpp
+ * test_access_32.cpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -28,13 +28,13 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 
-#include <packed_int_access.hpp>
+#include <word_packing.hpp>
 
-namespace pdinklag::test::packed_int_access {
+namespace word_packing::test::packed_int_access {
 
-using Pack = uint8_t;
-constexpr size_t MAX_WIDTH = 8;
+using Pack = uint32_t;
+constexpr size_t MAX_WIDTH = 32;
 
-#include "test_packed_int_access_impl.hpp"
+#include "test_access_impl.hpp"
 
 }

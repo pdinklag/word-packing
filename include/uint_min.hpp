@@ -31,7 +31,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace pdinklag {
+namespace word_packing {
 
 /**
  * \brief The minimum unsigned integer type that consists of at least the specified number of bits

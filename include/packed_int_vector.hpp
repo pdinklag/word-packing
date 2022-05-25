@@ -28,15 +28,12 @@
 #ifndef _PACKED_INT_VECTOR_HPP
 #define _PACKED_INT_VECTOR_HPP
 
-#include "int_container_impl.hpp"
+#include "word_packing_container.hpp"
 
 #include <algorithm>
-#include <cassert>
-#include <limits>
+#include <memory>
 
-namespace pdinklag {
-
-using namespace word_packing_internals;
+namespace word_packing {
 
 /**
  * \brief Vector of packed arbitrary-width (unsigned) integers (width known only at runtime)
@@ -49,7 +46,7 @@ using namespace word_packing_internals;
  * \tparam Pack the unsigned integer type to pack words into
  */
 template<WordPackEligible Pack = uintmax_t>
-class PackedIntVector : public IntContainer<PackedIntVector<Pack>> {
+class PackedIntVector : public internal::IntContainer<PackedIntVector<Pack>> {
 private:
     size_t size_;
     size_t capacity_;
@@ -69,13 +66,12 @@ public:
     PackedIntVector& operator=(PackedIntVector&&) = default;
 
     PackedIntVector(PackedIntVector const& other) { *this = other; }
-    
     PackedIntVector& operator=(PackedIntVector const& other) {
         size_ = other.size_;
         capacity_ = other.capacity_;
         width_ = other.width_;
         mask_ = other.mask_;
-        data_ = allocate_pack_words<Pack>(size_, width_);
+        data_ = std::make_unique<Pack[]>(num_packs_required<Pack>(size_, width_));
         std::copy(other.data(), other.data() + num_packs_required<Pack>(size_, width_), data());
         return *this;
     }
@@ -93,7 +89,7 @@ public:
         assert(width_ <= std::numeric_limits<Pack>::digits);
 
         if(capacity_ > 0) {
-            data_ = allocate_pack_words<Pack>(capacity_, width_);
+            data_ = std::make_unique<Pack[]>(num_packs_required<Pack>(size_, width_));
         }
     }
 
@@ -103,7 +99,7 @@ public:
      * \param i the index of the integer
      * \return the integer at the given index
      */
-    uintmax_t get(size_t i) const { return get_rt<Pack>(i, data_.get(), width_, mask_); }
+    uintmax_t get(size_t i) const { return word_packing::get<Pack>(data_.get(), i, width_, mask_); }
 
     /**
      * \brief Writes a specific integer in the vector
@@ -111,7 +107,7 @@ public:
      * \param i the index of the integer
      * \param x the value to write to the specified index
      */
-    void set(size_t i, uintmax_t x) { set_rt<Pack>(i, x, data_.get(), width_, mask_); }
+    void set(size_t i, uintmax_t x) { word_packing::set<Pack>(data_.get(), i, x, width_, mask_); }
 
     /**
      * \brief Ensures that the vector's capacity fits at least the specified number of integers.

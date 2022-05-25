@@ -172,15 +172,15 @@ void run_benchmark() {
         generate_values(bits);
     }
     
-    using Uint = pdinklag::UintMin<bits>;
+    using Uint = word_packing::UintMin<bits>;
 
     {
-        pdinklag::PackedIntVector<Uint> pvec(N, bits);
+        word_packing::PackedIntVector<Uint> pvec(N, bits);
         benchmark_container(pvec).print("PackedIntVector", bits);
     }
 
     {
-        pdinklag::PackedFixedWidthIntVector<bits, Uint> pvec(N);
+        word_packing::PackedFixedWidthIntVector<bits, Uint> pvec(N);
         benchmark_container(pvec).print("PackedFixedWidthIntVector", bits);
     }
 

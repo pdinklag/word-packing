@@ -1,5 +1,5 @@
 /**
- * int_container_helpers.hpp
+ * word_packing_container.hpp
  * part of pdinklag/word-packing
  * 
  * MIT License
@@ -25,25 +25,12 @@
  * SOFTWARE.
  */
 
-#ifndef _INT_CONTAINER_HELPERS_HPP
-#define _INT_CONTAINER_HELPERS_HPP
+#ifndef _WORD_PACKING_CONTAINER_HPP
+#define _WORD_PACKING_CONTAINER_HPP
 
-#include <bit>
-#include <cassert>
-#include <concepts>
-#include <cstddef>
-#include <cstdint>
-#include <limits>
-#include <memory>
-#include <utility>
+#include "word_packing.hpp"
 
-namespace pdinklag {
-namespace word_packing_internals {
-
-template<typename T>
-concept WordPackEligible =
-    std::unsigned_integral<T> &&
-    std::popcount(unsigned(std::numeric_limits<T>::digits)) == 1; // word packs must have width a power of two
+namespace word_packing::internal {
 
 template<typename IntContainer>
 struct IntRef {
@@ -222,42 +209,6 @@ public:
     bool empty() const { return impl->size() == 0; }
 };
 
-constexpr uintmax_t low_mask(size_t const bits) {
-    return ~((UINTMAX_MAX << (bits - 1)) << 1); // nb: bits > 0 is assumed!
 }
-
-constexpr uintmax_t low_mask0(size_t const bits) {
-    return ~(UINTMAX_MAX << bits); // nb: bits < max bits is assumed!
-}
-
-
-constexpr size_t idiv_ceil(size_t const a, size_t const b) {
-    return ((a + b) - 1ULL) / b;
-}
-
-} // namespace word_packing_internals
-
-/**
- * \brief Computes the number of packs required to store the given number of integers with the given bit width
- * 
- * \tparam Pack the word pack type
- * \param num the number of packed integers
- * \param width the bit width of each packed integer
- * \return the number of packs required for storage
- */
-template<std::unsigned_integral Pack>
-constexpr size_t num_packs_required(size_t const num, size_t const width) {
-    return word_packing_internals::idiv_ceil(num * width, std::numeric_limits<Pack>::digits);
-}
-
-namespace word_packing_internals {
-
-template<WordPackEligible Pack>
-auto allocate_pack_words(size_t const capacity, size_t const width) {
-    return std::make_unique<Pack[]>(num_packs_required<Pack>(capacity, width));
-}
-
-} // namespace word_packing_internals
-} // namespace pdinklag
 
 #endif

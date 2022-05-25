@@ -30,9 +30,9 @@
 
 #include <packed_int_vector.hpp>
 
-namespace pdinklag::test::packed_int_vector {
+namespace word_packing::test::packed_int_vector {
 
-using PackedIntVector = pdinklag::PackedIntVector<uint64_t>;
+using PackedIntVector = word_packing::PackedIntVector<uint64_t>;
 constexpr size_t MAX_WIDTH = 64;
 
 #include "test_packed_int_vector_impl.hpp"

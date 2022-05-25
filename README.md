@@ -9,7 +9,7 @@ Naturally, due to the fact that words are no longer aligned to hardware word siz
 
 ### Requirements
 
-This library is written in C++20, a corresponding compiler is required. Tests have been done only with GCC 11. Apart from that, the library as no external dependencies. For building the [benchmark](#benchmark) or the [unit tests](#unit-tests), CMake is required.
+This library is written in C++20, a corresponding compiler is required that fully supports concepts. Tests have been done only with GCC 11. Apart from that, the library as no external dependencies. For building the [benchmark](#benchmark) or the [unit tests](#unit-tests), CMake is required.
 
 ### License
 

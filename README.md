@@ -2,7 +2,16 @@
 
 This header-only C++20 library provides implementations for vectors of packed (unsigned) integers, commonly referred to as *word packing* in the literature. These integers are represented by an arbitrary number of bits (called *width*), which allows for saving space when they are known to be limited to a universe with a worst-case entropy other than the natively supported 8, 16, 32 or 64 bits.
 
-Naturally, due to the fact that words are no longer aligned to hardware word sizes, access to packed vectors is slower than aligned access. This implementation attempts to give access as fast as possible. Depending on your use case, we recommend the corresponding implementation:
+Naturally, due to the fact that words are no longer aligned to hardware word sizes, access to packed vectors is slower than aligned access. To achieve access as fast as possible, depending on your use case, we recommend one of the corresponding implementations:
+
+| Word width known at &hellip; | Dynamic resizing required | Recommended Implementation                              | C++ / STL Counterpart |
+| ---------------------------- | ------------------------- | ------------------------------------------------------- | --------------------- |
+| Compile time                 | yes                       | [PackedFixedWidthIntVector](#packedfixedwidthintvector) | `std::vector`         |
+| Compile time                 | no                        | [PackedFixedWidthIntAccess](#packed-access-decorators)  | plain array           |
+| Runtime                      | yes                       | [PackedIntVector](#packedintvector)                     | `std::vector`         |
+| Runtime                      | no                        | [PackedWidthIntAccess](#packed-access-decorators)       | plain array           |
+
+
 
 * If your width per integer is *already known at compile time*, use [PackedFixedWidthIntVector](#packedfixedwidthintvector).
 * Otherwise, if your width is only known *at runtime*, use [PackedIntVector](#packedintvector).
@@ -104,6 +113,25 @@ It is possible to change the integer width at runtime using a special overload o
 
 ```cpp
 iv.resize(100, 12); // after this operation, each integer has width 12 bits
+```
+
+#### Packed Access Decorators
+
+In case you already have a buffer that you would simply like decorate with word packing, use the *PackedIntAccess* or *PackedFixedWidthIntAccess* class, respectively. These are bare bones in that they store nothing but a pointer. However, this makes them very lightweight and eligible for POD types.
+
+A useful companion on this path is the `num_packs_required` function, which will compute for you the number of packs required to store a given number of integers of given width.
+
+```cpp
+#include <packed_int_access.hpp>
+// ...
+
+auto const bufsize = pdinklag::num_packs_required<uint64_t>(100, 7);
+uint64_t buffer[bufsize];
+
+pdinklag::PackedIntAccess(buffer, 7);
+for(int i = 0; i < 100; i++) {
+    iv[i] = i;
+}
 ```
 
 #### UintMin

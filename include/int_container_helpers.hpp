@@ -35,8 +35,10 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <utility>
 
-namespace pdinklag::word_packing_internals {
+namespace pdinklag {
+namespace word_packing_internals {
 
 template<typename T>
 concept WordPackEligible =
@@ -228,20 +230,34 @@ constexpr uintmax_t low_mask0(size_t const bits) {
     return ~(UINTMAX_MAX << bits); // nb: bits < max bits is assumed!
 }
 
+
 constexpr size_t idiv_ceil(size_t const a, size_t const b) {
     return ((a + b) - 1ULL) / b;
 }
 
-template<WordPackEligible Pack>
-constexpr size_t pack_word_count(size_t const num, size_t const width) {
-    return idiv_ceil(num * width, std::numeric_limits<Pack>::digits);
+} // namespace word_packing_internals
+
+/**
+ * \brief Computes the number of packs required to store the given number of integers with the given bit width
+ * 
+ * \tparam Pack the word pack type
+ * \param num the number of packed integers
+ * \param width the bit width of each packed integer
+ * \return the number of packs required for storage
+ */
+template<std::unsigned_integral Pack>
+constexpr size_t num_packs_required(size_t const num, size_t const width) {
+    return word_packing_internals::idiv_ceil(num * width, std::numeric_limits<Pack>::digits);
 }
+
+namespace word_packing_internals {
 
 template<WordPackEligible Pack>
 auto allocate_pack_words(size_t const capacity, size_t const width) {
-    return std::make_unique<Pack[]>(pack_word_count<Pack>(capacity, width));
+    return std::make_unique<Pack[]>(num_packs_required<Pack>(capacity, width));
 }
 
-}
+} // namespace word_packing_internals
+} // namespace pdinklag
 
 #endif

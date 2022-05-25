@@ -41,10 +41,8 @@ using namespace word_packing_internals;
 /**
  * \brief Vector of packed arbitrary-width (unsigned) integers (width known at compile time)
  * 
- * This class packs integers of arbitrary bit width into a consecutive array of words, which can be used to save space.
- * However, accessing packed integers is substantially slower than aligned accesses due to the required arithmetics.
- * 
- * Use this class if the width of the contained integers is already known at compile time.
+ * This class packs integers of arbitrary bit widths into a consecutive array of packs.
+ * Use this if the width of the contained integers is already known at compile time.
  * 
  * The supported bit widths range from 1 to the width of the word pack type.
  * 
@@ -78,7 +76,7 @@ public:
         size_ = other.size_;
         capacity_ = other.capacity_;
         data_ = allocate_pack_words<Pack>(size_, width_);
-        std::copy(other.data(), other.data() + pack_word_count<Pack>(size_, width_), data());
+        std::copy(other.data(), other.data() + num_packs_required<Pack>(size_, width_), data());
         return *this;
     }
 
@@ -123,7 +121,7 @@ public:
         if(capacity > capacity_) {
             // allocate a new vector and copy data
             PackedFixedWidthIntVector new_vec(capacity);
-            std::copy(data(), data() + pack_word_count<Pack>(size_, width_), new_vec.data());
+            std::copy(data(), data() + num_packs_required<Pack>(size_, width_), new_vec.data());
             new_vec.resize(size_); // this does nothing but set the size of the new vector
             *this = std::move(new_vec);
         }
@@ -137,7 +135,7 @@ public:
         if(size_ < capacity_) {
             // allocate a new vector and copy data
             PackedFixedWidthIntVector new_vec(size_);
-            std::copy(data(), data() + pack_word_count<Pack>(size_, width_), new_vec.data());
+            std::copy(data(), data() + num_packs_required<Pack>(size_, width_), new_vec.data());
             for(size_t i = 0; i < size_; i++) new_vec.set(i, get(i)); // TODO: copy word packs instead of individual integers
             *this = std::move(new_vec);
         }
@@ -161,7 +159,7 @@ public:
             size_t const copy_num = std::min(size_, size);
             
             // copy packs
-            std::copy(data(), data() + pack_word_count<Pack>(copy_num, width_), new_vec.data());
+            std::copy(data(), data() + num_packs_required<Pack>(copy_num, width_), new_vec.data());
 
             *this = std::move(new_vec);
         }

@@ -47,17 +47,17 @@ using namespace word_packing_internals;
  * 
  * Use this class if the width of the contained integers is already known at compile time.
  * 
- * The supported bit widths range from 1 to the width of the pack word type.
+ * The supported bit widths range from 1 to the width of the word pack type.
  * 
  * \tparam width_ the width per stored integer
- * \tparam PackWord the unsigned integer types to pack words into
+ * \tparam Pack the unsigned integer type to pack words into
  */
-template<size_t width_, std::unsigned_integral PackWord = uintmax_t>
-class PackedFixedWidthIntVector : public IntContainer<PackedFixedWidthIntVector<width_, PackWord>> {
+template<size_t width_, std::unsigned_integral Pack = uintmax_t>
+class PackedFixedWidthIntVector : public IntContainer<PackedFixedWidthIntVector<width_, Pack>> {
 private:
-    static constexpr size_t PACK_WORD_BITS = std::numeric_limits<PackWord>::digits;
+    static constexpr size_t PACK_WORD_BITS = std::numeric_limits<Pack>::digits;
     static_assert(std::popcount(PACK_WORD_BITS) == 1, "the number of bits of a PACK_WORD_BITS must be a power of two");
-    static constexpr size_t PACK_WORD_MAX = std::numeric_limits<PackWord>::max();
+    static constexpr size_t PACK_WORD_MAX = std::numeric_limits<Pack>::max();
 
     static_assert(width_ > 0);
     static_assert(width_ <= PACK_WORD_BITS);
@@ -67,7 +67,7 @@ private:
 
     size_t size_;
     size_t capacity_;
-    std::unique_ptr<PackWord[]> data_;
+    std::unique_ptr<Pack[]> data_;
 
 public:
     /**
@@ -85,8 +85,8 @@ public:
     PackedFixedWidthIntVector& operator=(PackedFixedWidthIntVector const& other) {
         size_ = other.size_;
         capacity_ = other.capacity_;
-        data_ = allocate_pack_words<PackWord>(size_, width_);
-        std::copy(other.data(), other.data() + pack_word_count<PackWord>(size_, width_), data());
+        data_ = allocate_pack_words<Pack>(size_, width_);
+        std::copy(other.data(), other.data() + pack_word_count<Pack>(size_, width_), data());
         return *this;
     }
 
@@ -99,7 +99,7 @@ public:
      */
     PackedFixedWidthIntVector(size_t size) : size_(size), capacity_(size) {
         if(capacity_ > 0) {
-            data_ = allocate_pack_words<PackWord>(capacity_, width_);
+            data_ = allocate_pack_words<Pack>(capacity_, width_);
         }
     }
 
@@ -109,7 +109,7 @@ public:
      * \param i the index of the integer
      * \return the integer at the given index
      */
-    uintmax_t get(size_t i) const { return get_ct<PackWord, width_>(i, data_.get()); }
+    uintmax_t get(size_t i) const { return get_ct<Pack, width_>(i, data_.get()); }
 
     /**
      * \brief Writes a specific integer in the vector
@@ -117,7 +117,7 @@ public:
      * \param i the index of the integer
      * \param x the value to write to the specified index
      */
-    void set(size_t i, uintmax_t x) { set_ct<PackWord, width_>(i, x, data_.get()); }
+    void set(size_t i, uintmax_t x) { set_ct<Pack, width_>(i, x, data_.get()); }
 
     /**
      * \brief Ensures that the vector's capacity fits at least the specified number of integers.
@@ -131,7 +131,7 @@ public:
         if(capacity > capacity_) {
             // allocate a new vector and copy data
             PackedFixedWidthIntVector new_vec(capacity);
-            std::copy(data(), data() + pack_word_count<PackWord>(size_, width_), new_vec.data());
+            std::copy(data(), data() + pack_word_count<Pack>(size_, width_), new_vec.data());
             new_vec.resize(size_); // this does nothing but set the size of the new vector
             *this = std::move(new_vec);
         }
@@ -145,8 +145,8 @@ public:
         if(size_ < capacity_) {
             // allocate a new vector and copy data
             PackedFixedWidthIntVector new_vec(size_);
-            std::copy(data(), data() + pack_word_count<PackWord>(size_, width_), new_vec.data());
-            for(size_t i = 0; i < size_; i++) new_vec.set(i, get(i)); // TODO: copy pack words instead of individual integers
+            std::copy(data(), data() + pack_word_count<Pack>(size_, width_), new_vec.data());
+            for(size_t i = 0; i < size_; i++) new_vec.set(i, get(i)); // TODO: copy word packs instead of individual integers
             *this = std::move(new_vec);
         }
     }
@@ -169,7 +169,7 @@ public:
             size_t const copy_num = std::min(size_, size);
             
             // copy packs
-            std::copy(data(), data() + pack_word_count<PackWord>(copy_num, width_), new_vec.data());
+            std::copy(data(), data() + pack_word_count<Pack>(copy_num, width_), new_vec.data());
 
             *this = std::move(new_vec);
         }
@@ -217,22 +217,22 @@ public:
     }
 
     /**
-     * \brief Provides read and write access to the underlying array of pack words
+     * \brief Provides read and write access to the underlying array of word packs
      * 
-     * Use with care: a packed word contains multiple integers from the vector and that modfying it may invalidate neighbouring vector entries.
+     * Use with care: a word pack contains multiple integers from the vector and that modfying it may invalidate neighbouring vector entries.
      * 
-     * \return the array of pack words
+     * \return the array of word packs
      */
-    PackWord* data() { return data_.get(); }
+    Pack* data() { return data_.get(); }
 
     /**
-     * \brief Provides read access to the underlying array of pack words
+     * \brief Provides read access to the underlying array of word packs
      * 
      * Note that these do not correspond directly to the integers contained in the vector.
      * 
-     * \return the array of pack words
+     * \return the array of word packs
      */
-    PackWord const* data() const { return data_.get(); }
+    Pack const* data() const { return data_.get(); }
 
     /**
      * \brief Reports the bit width of the contained integers

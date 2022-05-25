@@ -37,26 +37,26 @@ namespace pdinklag::word_packing_internals {
  * 
  * This implementation is for the case where the width per integer is known only at runtime.
  * 
- * \tparam PackWord the pack word type
+ * \tparam Pack the word pack type
  * \param i the index of the integer to read
- * \param data the array of pack words
+ * \param data the array of word packs
  * \param width the width per integer in the container
  * \param mask the precomputed mask for masking out the `width` low bits of an integer
  * \return the read integer
  */
-template<std::unsigned_integral PackWord>
-inline uintmax_t get_rt(size_t const i, PackWord const* data, size_t const width, size_t const mask) {
-    constexpr size_t PACK_WORD_BITS = std::numeric_limits<PackWord>::digits;
+template<std::unsigned_integral Pack>
+inline uintmax_t get_rt(size_t const i, Pack const* data, size_t const width, size_t const mask) {
+    constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
 
     size_t const j = i * width;
-    size_t const a = j / PACK_WORD_BITS;                   // left border
-    size_t const b = (j + width - 1ULL) / PACK_WORD_BITS; // right border
+    size_t const a = j / PACK_BITS;                   // left border
+    size_t const b = (j + width - 1ULL) / PACK_BITS; // right border
 
     // da is the distance of a's relevant bits from the left border
-    size_t const da = j & (PACK_WORD_BITS - 1);
+    size_t const da = j & (PACK_BITS - 1);
 
     // wa is the number of a's relevant bits
-    size_t const wa = PACK_WORD_BITS - da;
+    size_t const wa = PACK_BITS - da;
 
     // get the wa highest bits from a
     uintmax_t const a_hi = data[a] >> da;
@@ -75,25 +75,25 @@ inline uintmax_t get_rt(size_t const i, PackWord const* data, size_t const width
  * 
  * This implementation is optimized for the case where the width per integer is already known at compile time.
  * 
- * \tparam PackWord the pack word type
+ * \tparam Pack the word pack type
  * \tparam width the width per integer in the container
  * \param i the index of the integer to read
- * \param data the array of pack words
+ * \param data the array of word packs
  * \return the read integer
  */
-template<std::unsigned_integral PackWord, size_t width>
-inline  uintmax_t get_ct(size_t const i, PackWord const* data) {
-    constexpr size_t PACK_WORD_BITS = std::numeric_limits<PackWord>::digits;
-    constexpr size_t PACK_WORD_MAX = std::numeric_limits<PackWord>::max();
+template<std::unsigned_integral Pack, size_t width>
+inline  uintmax_t get_ct(size_t const i, Pack const* data) {
+    constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
+    constexpr size_t PACK_MAX = std::numeric_limits<Pack>::max();
 
-    constexpr size_t mask = PACK_WORD_MAX >> (PACK_WORD_BITS - width);
-    constexpr bool aligned = (PACK_WORD_BITS % width) == 0;
+    constexpr size_t mask = PACK_MAX >> (PACK_BITS - width);
+    constexpr bool aligned = (PACK_BITS % width) == 0;
 
     size_t const j = i * width;
-    size_t const a = j / PACK_WORD_BITS;                   // left border
+    size_t const a = j / PACK_BITS;                   // left border
 
     // da is the distance of a's relevant bits from the left border
-    size_t const da = j & (PACK_WORD_BITS - 1);
+    size_t const da = j & (PACK_BITS - 1);
 
     // get the wa highest bits from a
     uintmax_t const a_hi = data[a] >> da;
@@ -102,10 +102,10 @@ inline  uintmax_t get_ct(size_t const i, PackWord const* data) {
         // if we're aligned, we don't need to consider the next pack
         return a_hi & mask;
     } else {
-        size_t const b = (j + width - 1ULL) / PACK_WORD_BITS; // right border
+        size_t const b = (j + width - 1ULL) / PACK_BITS; // right border
 
         // wa is the number of a's relevant bits
-        size_t const wa = PACK_WORD_BITS - da;
+        size_t const wa = PACK_BITS - da;
 
         // get b (its high bits will be masked away below)
         // NOTE: we could save this step if we knew a == b,
@@ -122,27 +122,27 @@ inline  uintmax_t get_ct(size_t const i, PackWord const* data) {
  * 
  * This implementation is for the case where the width per integer is known only at runtime.
  * 
- * \tparam PackWord the pack word type
+ * \tparam Pack the PACK_MAX type
  * \param i the index of the integer to read
  * \param x the value to write
- * \param data the array of pack words
+ * \param data the array of PACK_MAXs
  * \param width the width per integer in the container
  * \param mask the precomputed mask for masking out the `width` low bits of an integer
  * \return the read integer
  */
-template<std::unsigned_integral PackWord>
-inline void set_rt(size_t const i, uintmax_t const x, PackWord* data, size_t const width, size_t const mask) {
-    constexpr size_t PACK_WORD_BITS = std::numeric_limits<PackWord>::digits;
+template<std::unsigned_integral Pack>
+inline void set_rt(size_t const i, uintmax_t const x, Pack* data, size_t const width, size_t const mask) {
+    constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
 
     uintmax_t const v = x & mask; // make sure it fits...
     
     size_t const j = i * width;
-    size_t const a = j / PACK_WORD_BITS;                   // left border
-    size_t const b = (j + width - 1ULL) / PACK_WORD_BITS; // right border
+    size_t const a = j / PACK_BITS;                   // left border
+    size_t const b = (j + width - 1ULL) / PACK_BITS; // right border
 
     // get starting position of relevant bit block within data[a]
-    size_t const da = j & (PACK_WORD_BITS - 1);
-    assert(da < PACK_WORD_BITS);
+    size_t const da = j & (PACK_BITS - 1);
+    assert(da < PACK_BITS);
 
     if(a == b) {
         // the bits are an infix of data[a]
@@ -152,7 +152,7 @@ inline void set_rt(size_t const i, uintmax_t const x, PackWord* data, size_t con
         data[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
     } else {
         // the bits are the suffix of data[a] and prefix of data[b]
-        size_t const wa = PACK_WORD_BITS - da;
+        size_t const wa = PACK_BITS - da;
         assert(wa > 0);
         assert(wa < width);
         size_t const wb = width - wa;
@@ -174,30 +174,30 @@ inline void set_rt(size_t const i, uintmax_t const x, PackWord* data, size_t con
  * 
  * This implementation is optimized for the case where the width per integer is already known at compile time.
  * 
- * \tparam PackWord the pack word type
+ * \tparam Pack the PACK_MAX type
  * \tparam width the width per integer in the container
  * \param i the index of the integer to read
  * \param x the value to write
- * \param data the array of pack words
+ * \param data the array of PACK_MAXs
  * \return the read integer
  */
-template<std::unsigned_integral PackWord, size_t width>
-inline void set_ct(size_t const i, uintmax_t const x, PackWord* data) {
-    constexpr size_t PACK_WORD_BITS = std::numeric_limits<PackWord>::digits;
-    constexpr size_t PACK_WORD_MAX = std::numeric_limits<PackWord>::max();
+template<std::unsigned_integral Pack, size_t width>
+inline void set_ct(size_t const i, uintmax_t const x, Pack* data) {
+    constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
+    constexpr size_t PACK_MAX = std::numeric_limits<Pack>::max();
 
-    constexpr size_t mask = PACK_WORD_MAX >> (PACK_WORD_BITS - width);
-    constexpr bool aligned = (PACK_WORD_BITS % width) == 0;
+    constexpr size_t mask = PACK_MAX >> (PACK_BITS - width);
+    constexpr bool aligned = (PACK_BITS % width) == 0;
 
     uintmax_t const v = x & mask; // make sure it fits...
     
     size_t const j = i * width;
-    size_t const a = j / PACK_WORD_BITS;                   // left border
-    size_t const b = (j + width - 1ULL) / PACK_WORD_BITS; // right border
+    size_t const a = j / PACK_BITS;                   // left border
+    size_t const b = (j + width - 1ULL) / PACK_BITS; // right border
 
     // get starting position of relevant block within data[a]
-    size_t const da = j & (PACK_WORD_BITS - 1);
-    assert(da < PACK_WORD_BITS);
+    size_t const da = j & (PACK_BITS - 1);
+    assert(da < PACK_BITS);
 
     if(aligned || a == b) {
         // the bits are an infix of data_[a]
@@ -207,7 +207,7 @@ inline void set_ct(size_t const i, uintmax_t const x, PackWord* data) {
         data[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
     } else {
         // the bits are the suffix of data_[a] and prefix of data[b]
-        size_t const wa = PACK_WORD_BITS - da;
+        size_t const wa = PACK_BITS - da;
         assert(wa > 0);
         assert(wa < width);
         size_t const wb = width - wa;

@@ -53,10 +53,6 @@ using namespace word_packing_internals;
 template<WordPackEligible Pack = uintmax_t>
 class PackedIntVector : public IntContainer<PackedIntVector<Pack>> {
 private:
-    static constexpr size_t PACK_WORD_BITS = std::numeric_limits<Pack>::digits;
-    static_assert(std::popcount(PACK_WORD_BITS) == 1, "the number of bits of a PACK_WORD_BITS must be a power of two");
-    static constexpr size_t PACK_WORD_MAX = std::numeric_limits<Pack>::max();
-
     size_t size_;
     size_t capacity_;
     size_t width_;
@@ -94,9 +90,9 @@ public:
      * \param size the number of integers in the vector
      * \param width the width, in bits, of each integer
      */
-    PackedIntVector(size_t size, size_t width) : size_(size), capacity_(size), width_(width), mask_(PACK_WORD_MAX >> (PACK_WORD_BITS - width)) {
+    PackedIntVector(size_t size, size_t width) : size_(size), capacity_(size), width_(width), mask_(low_mask(width)) {
         assert(width_ > 0);
-        assert(width_ <= PACK_WORD_BITS);
+        assert(width_ <= std::numeric_limits<Pack>::digits);
 
         if(capacity_ > 0) {
             data_ = allocate_pack_words<Pack>(capacity_, width_);

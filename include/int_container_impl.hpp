@@ -86,7 +86,7 @@ inline  uintmax_t get_ct(size_t const i, Pack const* data) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
     constexpr size_t PACK_MAX = std::numeric_limits<Pack>::max();
 
-    constexpr size_t mask = PACK_MAX >> (PACK_BITS - width);
+    constexpr size_t mask = low_mask(width);
     constexpr bool aligned = (PACK_BITS % width) == 0;
 
     size_t const j = i * width;
@@ -186,7 +186,7 @@ inline void set_ct(size_t const i, uintmax_t const x, Pack* data) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
     constexpr size_t PACK_MAX = std::numeric_limits<Pack>::max();
 
-    constexpr size_t mask = PACK_MAX >> (PACK_BITS - width);
+    constexpr size_t mask = low_mask(width);
     constexpr bool aligned = (PACK_BITS % width) == 0;
 
     uintmax_t const v = x & mask; // make sure it fits...

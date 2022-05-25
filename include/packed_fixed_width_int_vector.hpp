@@ -54,15 +54,8 @@ using namespace word_packing_internals;
 template<size_t width_, WordPackEligible Pack = uintmax_t>
 class PackedFixedWidthIntVector : public IntContainer<PackedFixedWidthIntVector<width_, Pack>> {
 private:
-    static constexpr size_t PACK_WORD_BITS = std::numeric_limits<Pack>::digits;
-    static_assert(std::popcount(PACK_WORD_BITS) == 1, "the number of bits of a PACK_WORD_BITS must be a power of two");
-    static constexpr size_t PACK_WORD_MAX = std::numeric_limits<Pack>::max();
-
-    static_assert(width_ > 0);
-    static_assert(width_ <= PACK_WORD_BITS);
-    static constexpr size_t mask_ = PACK_WORD_MAX >> (PACK_WORD_BITS - width_);
-
-    static constexpr bool aligned_ = (PACK_WORD_BITS % width_) == 0;
+    static_assert(width_ > 0, "width cannot be zero");
+    static_assert(width_ <= std::numeric_limits<Pack>::digits, "word pack width must be at list the word width");
 
     size_t size_;
     size_t capacity_;

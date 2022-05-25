@@ -44,7 +44,7 @@ namespace pdinklag::word_packing_internals {
  * \param mask the precomputed mask for masking out the `width` low bits of an integer
  * \return the read integer
  */
-template<std::unsigned_integral Pack>
+template<WordPackEligible Pack>
 inline uintmax_t get_rt(size_t const i, Pack const* data, size_t const width, size_t const mask) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
 
@@ -81,7 +81,7 @@ inline uintmax_t get_rt(size_t const i, Pack const* data, size_t const width, si
  * \param data the array of word packs
  * \return the read integer
  */
-template<std::unsigned_integral Pack, size_t width>
+template<WordPackEligible Pack, size_t width>
 inline  uintmax_t get_ct(size_t const i, Pack const* data) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
     constexpr size_t PACK_MAX = std::numeric_limits<Pack>::max();
@@ -130,7 +130,7 @@ inline  uintmax_t get_ct(size_t const i, Pack const* data) {
  * \param mask the precomputed mask for masking out the `width` low bits of an integer
  * \return the read integer
  */
-template<std::unsigned_integral Pack>
+template<WordPackEligible Pack>
 inline void set_rt(size_t const i, uintmax_t const x, Pack* data, size_t const width, size_t const mask) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
 
@@ -181,7 +181,7 @@ inline void set_rt(size_t const i, uintmax_t const x, Pack* data, size_t const w
  * \param data the array of PACK_MAXs
  * \return the read integer
  */
-template<std::unsigned_integral Pack, size_t width>
+template<WordPackEligible Pack, size_t width>
 inline void set_ct(size_t const i, uintmax_t const x, Pack* data) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
     constexpr size_t PACK_MAX = std::numeric_limits<Pack>::max();

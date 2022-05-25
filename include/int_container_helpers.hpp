@@ -28,6 +28,7 @@
 #ifndef _INT_CONTAINER_HELPERS_HPP
 #define _INT_CONTAINER_HELPERS_HPP
 
+#include <bit>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
@@ -36,6 +37,11 @@
 #include <memory>
 
 namespace pdinklag::word_packing_internals {
+
+template<typename T>
+concept WordPackEligible =
+    std::unsigned_integral<T> &&
+    std::popcount(unsigned(std::numeric_limits<T>::digits)) == 1; // word packs must have width a power of two
 
 template<typename IntContainer>
 struct IntRef {
@@ -226,12 +232,12 @@ constexpr size_t idiv_ceil(size_t const a, size_t const b) {
     return ((a + b) - 1ULL) / b;
 }
 
-template<std::unsigned_integral Pack>
+template<WordPackEligible Pack>
 constexpr size_t pack_word_count(size_t const num, size_t const width) {
     return idiv_ceil(num * width, std::numeric_limits<Pack>::digits);
 }
 
-template<std::unsigned_integral Pack>
+template<WordPackEligible Pack>
 auto allocate_pack_words(size_t const capacity, size_t const width) {
     return std::make_unique<Pack[]>(pack_word_count<Pack>(capacity, width));
 }

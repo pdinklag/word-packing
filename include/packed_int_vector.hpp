@@ -31,7 +31,6 @@
 #include "int_container_impl.hpp"
 
 #include <algorithm>
-#include <bit>
 #include <cassert>
 #include <limits>
 
@@ -51,7 +50,7 @@ using namespace word_packing_internals;
  * 
  * \tparam Pack the unsigned integer types to pack words into
  */
-template<std::unsigned_integral Pack = uintmax_t>
+template<WordPackEligible Pack = uintmax_t>
 class PackedIntVector : public IntContainer<PackedIntVector<Pack>> {
 private:
     static constexpr size_t PACK_WORD_BITS = std::numeric_limits<Pack>::digits;

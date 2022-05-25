@@ -84,7 +84,7 @@ public:
      * \param size the number of integers in the vector
      * \param width the width, in bits, of each integer
      */
-    PackedIntVector(size_t size, size_t width) : size_(size), capacity_(size), width_(width), mask_(low_mask(width)) {
+    PackedIntVector(size_t size, size_t width) : size_(size), capacity_(size), width_(width), mask_(internal::low_mask(width)) {
         assert(width_ > 0);
         assert(width_ <= std::numeric_limits<Pack>::digits);
 
@@ -99,7 +99,7 @@ public:
      * \param i the index of the integer
      * \return the integer at the given index
      */
-    uintmax_t get(size_t i) const { return word_packing::get<Pack>(data_.get(), i, width_, mask_); }
+    uintmax_t get(size_t i) const { return internal::get(data_.get(), i, width_, mask_); }
 
     /**
      * \brief Writes a specific integer in the vector
@@ -107,7 +107,7 @@ public:
      * \param i the index of the integer
      * \param x the value to write to the specified index
      */
-    void set(size_t i, uintmax_t x) { word_packing::set<Pack>(data_.get(), i, x, width_, mask_); }
+    void set(size_t i, uintmax_t x) { internal::set(data_.get(), i, x, width_, mask_); }
 
     /**
      * \brief Ensures that the vector's capacity fits at least the specified number of integers.

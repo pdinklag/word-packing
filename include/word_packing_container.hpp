@@ -28,49 +28,10 @@
 #ifndef _WORD_PACKING_CONTAINER_HPP
 #define _WORD_PACKING_CONTAINER_HPP
 
-#include "word_packing.hpp"
+#include "word_packing_impl.hpp"
+#include "int_ref.hpp"
 
 namespace word_packing::internal {
-
-template<typename IntContainer>
-struct IntRef {
-    IntContainer* container;
-    size_t index;
-
-    IntRef(IntContainer& _container, size_t _index) : container(&_container), index(_index) {
-    }
-
-    IntRef(const IntRef&) = default;
-    IntRef(IntRef&&) = default;
-    
-    IntRef& operator=(const IntRef&) = delete; // ambiguity with value assignment - use explicit casts!
-    IntRef& operator=(IntRef&&) = delete; // ambiguity with value assignment - use explicit casts!
-
-    operator uintmax_t() const { return container->get(index); }
-    void operator=(uintmax_t x) { container->set(index, x); }
-
-    bool operator==(IntRef const&) const = default;
-    bool operator!=(IntRef const&) const = default;
-};
-
-template<typename IntContainer>
-struct ConstIntRef {
-    IntContainer const* container;
-    size_t index;
-
-    ConstIntRef(IntContainer const& _container, size_t _index) : container(&_container), index(_index) {
-    }
-
-    ConstIntRef(const ConstIntRef&) = default;
-    ConstIntRef(ConstIntRef&&) = default;
-    ConstIntRef& operator=(const ConstIntRef&) = default;
-    ConstIntRef& operator=(ConstIntRef&&) = default;
-
-    operator uintmax_t() const { return container->get(index); }
-
-    bool operator==(ConstIntRef const&) const = default;
-    bool operator!=(ConstIntRef const&) const = default;
-};
 
 template<typename IntRef>
 struct IntIterator {

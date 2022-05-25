@@ -7,9 +7,9 @@ Naturally, due to the fact that words are no longer aligned to hardware word siz
 | Word width known at &hellip; | Dynamic resizing required | Recommended Implementation                              |
 | ---------------------------- | ------------------------- | ------------------------------------------------------- |
 | Compile time                 | yes                       | [PackedFixedWidthIntVector](#packedfixedwidthintvector) |
-| Compile time                 | no                        | [Direct API (Fixed Width)](#fixed-width-access)         |
+| Compile time                 | no                        | [Accessors (Fixed Width)](#fixed-width-accessors)       |
 | Runtime                      | yes                       | [PackedIntVector](#packedintvector)                     |
-| Runtime                      | no                        | [Direct API](#direct-api)                               |
+| Runtime                      | no                        | [Accessors](#accessors)                                 |
 
 ### Requirements
 
@@ -66,9 +66,11 @@ add_subdirectory(path/to/word-packing)
 
 You can then link against the `word-packing` interface library, which will automatically add the include directory to your target.
 
-### Direct API
+### Accessors
 
-The main API consists of the free functions in the `word_packing` namespace. They allow treating any buffer of unsigned integers as a container of packed words via the `get` and `set` overloads.
+The accessors allow treating any buffer of unsigned integers as a container of packed words. Their usage is straightforward and they can be used as garbage objects that will likely be optimized away completely by any modern compiler.
+
+Consider the following example:
 
 ```cpp
 #include <word_packing.hpp>
@@ -77,27 +79,21 @@ The main API consists of the free functions in the `word_packing` namespace. The
 // we compute the first 20 Fibonacci numbers, which fit into 13 bits each
 using Pack = uint64_t;
 size_t const bits = 13;
-auto const mask = word_packing::low_mask(bits); // precompute the bit mask to improve performance
+Pack buffer[word_packing::num_packs_required<Pack>(20, bits)];
 
-Pack fib[word_packing::num_packs_required<Pack>(20, bits)];
-word_packing::set(fib, 0, 0, bits, mask); // fib(1) = 0
-word_packing::set(fib, 1, 1, bits, mask); // fib(2) = 1
+auto fib = word_packing::accessor(buffer, bits);
+fib[0] = 0;
+fib[1] = 1;
 for(int i = 2; i < 20; i++) {
-    auto fib_i2 = word_packing::get(fib, i-2, bits, mask);
-    auto fib_i1 = word_packing::get(fib, i-1, bits, mask);
-    word_packing::set(fib, i, fib_i2 + fib_i1, bits, mask); // fib(i) = fib(i-2) + fib(i-1)
+    fib[i] = fib[i-2] + fib[i-1];
 }
 ```
 
-The precomputed bit mask can be left out. However, then, it needs to be recomputed for every access, which can be a factor in performance.
+In the example above, you will also notice the utility function `num_packs_required`, which computes the number of packs of the given type required to store a given number of words with the given bit width.
 
-#### Utilities
+#### Fixed Width Accessors
 
-In the example above, you will also notice the utility functions `low_mask` and `num_packs_required`, which are pretty much self-explanatory.
-
-#### Fixed Width Access
-
-If the width per integer is already known at compile time, it is recommended to use the overloads that make use of this fact.
+If the width per integer is already known at compile time, it is recommended to use the overloads that make use of this fact by providing better compile-time optimization opportunities.
 
 ```cpp
 #include <word_packing.hpp>
@@ -105,15 +101,14 @@ If the width per integer is already known at compile time, it is recommended to 
 
 // we compute the first 20 Fibonacci numbers, which fit into 13 bits each
 using Pack = uint64_t;
-constexpr size_t bits = 13;
+size_t const bits = 13;
+Pack buffer[word_packing::num_packs_required<Pack>(20, bits)];
 
-Pack fib[word_packing::num_packs_required<Pack>(20, bits)];
-word_packing::set<bits>(fib, 0, 0); // fib(1) = 0
-word_packing::set<bits>(fib, 1, 1); // fib(2) = 1
+auto fib = word_packing::accessor<bits>(buffer);
+fib[0] = 0;
+fib[1] = 1;
 for(int i = 2; i < 20; i++) {
-    auto fib_i2 = word_packing::get<bits>(fib, i-2);
-    auto fib_i1 = word_packing::get<bits>(fib, i-1);
-    word_packing::set<bits>(fib, i, fib_i2 + fib_i1); // fib(i) = fib(i-2) + fib(i-1)
+    fib[i] = fib[i-2] + fib[i-1];
 }
 ```
 
@@ -240,7 +235,7 @@ The output consists of lines containing pairs of keys and values as described in
 
 ## Implementation
 
-The core implementation of reading and writing packed containers is found in the [direct API](#direct-api) function overloads in `word_packing.hpp` and consists of all the bit twiddling you would imagine. Generally, regarding word packing, consider the following figure:
+The core implementation of reading and writing packed containers is found in the internal `get` and `set` overloads in `word_packing_impl.hpp` and consists of all the bit twiddling you would imagine. Generally, regarding word packing, consider the following figure:
 
 ![figures/layout.png](figures/layout.png)
 

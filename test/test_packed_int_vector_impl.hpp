@@ -29,7 +29,7 @@ TEST_SUITE("packed_int_vector") {
     TEST_CASE("set and get") {
         auto iota_test = [](size_t width){
             size_t const num = 9'999;
-            auto const mask = low_mask(width);
+            auto const mask = word_packing::internal::low_mask(width);
             uintmax_t const off = (1ULL << width) - num;
 
             PackedIntVector v(num, width);
@@ -54,7 +54,7 @@ TEST_SUITE("packed_int_vector") {
     TEST_CASE("resize") {
         auto resize_test = [](size_t width){
             size_t const num = 3'333;
-            auto const mask = low_mask(width);
+            auto const mask = word_packing::internal::low_mask(width);
 
             PackedIntVector v(num, width);
             CHECK(v.size() == num);
@@ -139,7 +139,7 @@ TEST_SUITE("packed_int_vector") {
             PackedIntVector v(0, width);
 
             size_t const num = 128;
-            auto const mask = low_mask(width);
+            auto const mask = word_packing::internal::low_mask(width);
 
             for(size_t i = 0; i < num; i++) {
                 v.push_back(i);
@@ -159,7 +159,7 @@ TEST_SUITE("packed_int_vector") {
     TEST_CASE("pop_back") {
         auto pop_test = [](size_t width){
             size_t const num = 128;
-            auto const mask = low_mask(width);
+            auto const mask = word_packing::internal::low_mask(width);
 
             PackedIntVector v(num, width);
             for(size_t i = 0; i < num; i++) {
@@ -228,7 +228,7 @@ TEST_SUITE("packed_int_vector") {
     TEST_CASE("iterator") {
         auto iterator_test = [](size_t width) {
             size_t const num = 3'333;
-            auto const mask = low_mask(width);
+            auto const mask = word_packing::internal::low_mask(width);
 
             PackedIntVector v(num, width);
             uintmax_t sum = 0;
@@ -254,7 +254,7 @@ TEST_SUITE("packed_int_vector") {
     TEST_CASE("const_iterator") {
         auto const_iterator_test = [](size_t width) {
             size_t const num = 3'333;
-            auto const mask = low_mask(width);
+            auto const mask = word_packing::internal::low_mask(width);
 
             PackedIntVector v(num, width);
             uintmax_t sum = 0;

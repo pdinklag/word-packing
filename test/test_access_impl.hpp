@@ -29,17 +29,17 @@ TEST_SUITE("packed_int_access") {
     TEST_CASE("set and get") {
         auto iota_test = [](size_t width){
             size_t const num = 9'999;
-            auto const mask = low_mask(width);
+            auto const mask = word_packing::internal::low_mask(width);
             uintmax_t const off = (1ULL << width) - num;
 
             Pack packs[num_packs_required<Pack>(num, width)];
             for(size_t i = 0; i < num; i++) {
-                set(packs, i, off + i, width, mask);
+                word_packing::internal::set(packs, i, off + i, width, mask);
             }
 
             for(size_t i = 0; i < num; i++) {
                 auto const expect = (off + i) & mask;
-                CHECK(get(packs, i, width, mask) == expect);
+                CHECK(word_packing::internal::get(packs, i, width, mask) == expect);
             }
         };
 

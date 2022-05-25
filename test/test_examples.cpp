@@ -37,34 +37,35 @@ namespace word_packing::test::examples {
 
 // nb: these aren't really "unit tests", they mainly exist to check whether the examples compile
 TEST_SUITE("word_packing_examples") {
-    TEST_CASE("direct_api") {
+    uintmax_t FIB[] = { 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181 };
+
+    TEST_CASE("accessor") {
         // we compute the first 20 Fibonacci numbers, which fit into 13 bits each
         using Pack = uint64_t;
         size_t const bits = 13;
-        auto const mask = word_packing::low_mask(bits); // precompute the bit mask to improve performance
+        Pack buffer[word_packing::num_packs_required<Pack>(20, bits)];
 
-        Pack fib[word_packing::num_packs_required<Pack>(20, bits)];
-        word_packing::set(fib, 0, 0, bits, mask); // fib(1) = 0
-        word_packing::set(fib, 1, 1, bits, mask); // fib(2) = 1
+        auto fib = word_packing::accessor(buffer, bits);
+        fib[0] = 0;
+        fib[1] = 1;
         for(int i = 2; i < 20; i++) {
-            auto fib_i2 = word_packing::get(fib, i-2, bits, mask);
-            auto fib_i1 = word_packing::get(fib, i-1, bits, mask);
-            word_packing::set(fib, i, fib_i2 + fib_i1, bits, mask); // fib(i) = fib(i-2) + fib(i-1)
+            fib[i] = fib[i-2] + fib[i-1];
+            CHECK(fib[i] == FIB[i]);
         }
     }
 
     TEST_CASE("direct_api_fixed_width") {
         // we compute the first 20 Fibonacci numbers, which fit into 13 bits each
         using Pack = uint64_t;
-        constexpr size_t bits = 13;
+        size_t const bits = 13;
+        Pack buffer[word_packing::num_packs_required<Pack>(20, bits)];
 
-        Pack fib[word_packing::num_packs_required<Pack>(20, bits)];
-        word_packing::set<bits>(fib, 0, 0); // fib(1) = 0
-        word_packing::set<bits>(fib, 1, 1); // fib(2) = 1
+        auto fib = word_packing::accessor<bits>(buffer);
+        fib[0] = 0;
+        fib[1] = 1;
         for(int i = 2; i < 20; i++) {
-            auto fib_i2 = word_packing::get<bits>(fib, i-2);
-            auto fib_i1 = word_packing::get<bits>(fib, i-1);
-            word_packing::set<bits>(fib, i, fib_i2 + fib_i1); // fib(i) = fib(i-2) + fib(i-1)
+            fib[i] = fib[i-2] + fib[i-1];
+            CHECK(fib[i] == FIB[i]);
         }
     }
 
@@ -75,6 +76,7 @@ TEST_SUITE("word_packing_examples") {
         fib[1] = 1;
         for(int i = 2; i < 20; i++) {
             fib[i] = fib[i-2] + fib[i-1];
+            CHECK(fib[i] == FIB[i]);
         }
         fib.resize(22, 14);
     }
@@ -86,6 +88,7 @@ TEST_SUITE("word_packing_examples") {
         fib[1] = 1;
         for(int i = 2; i < 20; i++) {
             fib[i] = fib[i-2] + fib[i-1];
+            CHECK(fib[i] == FIB[i]);
         }
     }
 

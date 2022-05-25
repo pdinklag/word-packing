@@ -95,7 +95,7 @@ public:
      * \param i the index of the integer
      * \return the integer at the given index
      */
-    uintmax_t get(size_t i) const { return word_packing::get<width_>(data_.get(), i); }
+    uintmax_t get(size_t i) const { return internal::get<width_>(data_.get(), i); }
 
     /**
      * \brief Writes a specific integer in the vector
@@ -103,7 +103,7 @@ public:
      * \param i the index of the integer
      * \param value the value to write to the specified index
      */
-    void set(size_t i, uintmax_t value) { word_packing::set<width_>(data_.get(), i, value); }
+    void set(size_t i, uintmax_t value) { internal::set<width_>(data_.get(), i, value); }
 
     /**
      * \brief Ensures that the vector's capacity fits at least the specified number of integers.

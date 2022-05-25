@@ -31,6 +31,8 @@
 #include <bit>
 #include <cassert>
 #include <concepts>
+#include <cstddef>
+#include <cstdint>
 #include <limits>
 
 namespace word_packing::internal {

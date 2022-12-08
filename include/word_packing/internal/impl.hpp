@@ -83,34 +83,43 @@ template<size_t width, WordPackEligible Pack>
 inline uintmax_t get(Pack const* data, size_t const i) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
 
-    constexpr uintmax_t mask = low_mask(width);
-    constexpr bool aligned = (PACK_BITS % width) == 0;
-
-    size_t const j = i * width;
-    size_t const a = j / PACK_BITS;                   // left border
-
-    // da is the distance of a's relevant bits from the left border
-    size_t const da = j & (PACK_BITS - 1);
-
-    // get the wa highest bits from a
-    uintmax_t const a_hi = data[a] >> da;
-
-    if constexpr(aligned) {
-        // if we're aligned, we don't need to consider the next pack
-        return a_hi & mask;
+    if constexpr(width == 1) {
+        // optimized access for single bits
+        size_t const a = i / PACK_BITS;
+        size_t const j = i % PACK_BITS;
+        size_t const mask = 1ULL << j;
+        return (data[a] & mask) ? 1 : 0;
     } else {
-        size_t const b = (j + width - 1ULL) / PACK_BITS; // right border
+        // arbitrary-width integers
+        constexpr uintmax_t mask = low_mask(width);
+        constexpr bool aligned = (PACK_BITS % width) == 0;
 
-        // wa is the number of a's relevant bits
-        size_t const wa = PACK_BITS - da;
+        size_t const j = i * width;
+        size_t const a = j / PACK_BITS;                   // left border
 
-        // get b (its high bits will be masked away below)
-        // NOTE: we could save this step if we knew a == b,
-        //       but the branch caused by checking that is too expensive
-        uintmax_t const b_lo = data[b];
+        // da is the distance of a's relevant bits from the left border
+        size_t const da = j & (PACK_BITS - 1);
 
-        // combine
-        return ((b_lo << wa) | a_hi) & mask;
+        // get the wa highest bits from a
+        uintmax_t const a_hi = data[a] >> da;
+
+        if constexpr(aligned) {
+            // if we're aligned, we don't need to consider the next pack
+            return a_hi & mask;
+        } else {
+            size_t const b = (j + width - 1ULL) / PACK_BITS; // right border
+
+            // wa is the number of a's relevant bits
+            size_t const wa = PACK_BITS - da;
+
+            // get b (its high bits will be masked away below)
+            // NOTE: we could save this step if we knew a == b,
+            //       but the branch caused by checking that is too expensive
+            uintmax_t const b_lo = data[b];
+
+            // combine
+            return ((b_lo << wa) | a_hi) & mask;
+        }
     }
 }
 
@@ -177,43 +186,54 @@ inline void set(Pack* data, size_t const i, uintmax_t const x, size_t const widt
 template<size_t width, WordPackEligible Pack>
 inline void set(Pack* data, size_t const i, uintmax_t const x) {
     constexpr size_t PACK_BITS = std::numeric_limits<Pack>::digits;
-    constexpr size_t PACK_MAX = std::numeric_limits<Pack>::max();
 
-    constexpr uintmax_t mask = low_mask(width);
-    constexpr bool aligned = (PACK_BITS % width) == 0;
-
-    uintmax_t const v = x & mask; // make sure it fits...
-    
-    size_t const j = i * width;
-    size_t const a = j / PACK_BITS;                   // left border
-    size_t const b = (j + width - 1ULL) / PACK_BITS; // right border
-
-    // get starting position of relevant block within data[a]
-    size_t const da = j & (PACK_BITS - 1);
-    assert(da < PACK_BITS);
-
-    if(aligned || a == b) {
-        // the bits are an infix of data_[a]
-        uintmax_t const xa = data[a];
-        uintmax_t const mask_lo = low_mask0(da);
-        uintmax_t const mask_hi = ~mask_lo << (width-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
-        data[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
+    if constexpr(width == 1) {
+        // optimized write for single bits
+        const bool b = bool(x); // clamp to 0 or 1
+        size_t const a = i / PACK_BITS;
+        size_t const j = i % PACK_BITS;
+        size_t const mask = 1ULL << j;
+        data[a] = (data[a] & ~mask) | (-b & mask); // nb: clear and set conditionally
     } else {
-        // the bits are the suffix of data_[a] and prefix of data[b]
-        size_t const wa = PACK_BITS - da;
-        assert(wa > 0);
-        assert(wa < width);
-        size_t const wb = width - wa;
+        // arbitrary-width integers
+        constexpr size_t PACK_MAX = std::numeric_limits<Pack>::max();
 
-        // combine the da lowest bits from a and the wa lowest bits of v
-        uintmax_t const a_lo = data[a] & low_mask0(da);
-        uintmax_t const v_lo = v & low_mask(wa);
-        data[a] = (v_lo << da) | a_lo;
+        constexpr uintmax_t mask = low_mask(width);
+        constexpr bool aligned = (PACK_BITS % width) == 0;
 
-        // combine the db highest bits of b and the wb highest bits of v
-        uintmax_t const b_hi = data[b] >> wb;
-        uintmax_t const v_hi = v >> wa;
-        data[b] = (b_hi << wb) | v_hi;
+        uintmax_t const v = x & mask; // make sure it fits...
+        
+        size_t const j = i * width;
+        size_t const a = j / PACK_BITS;                  // left border
+        size_t const b = (j + width - 1ULL) / PACK_BITS; // right border
+
+        // get starting position of relevant block within data[a]
+        size_t const da = j & (PACK_BITS - 1);
+        assert(da < PACK_BITS);
+
+        if(aligned || a == b) {
+            // the bits are an infix of data_[a]
+            uintmax_t const xa = data[a];
+            uintmax_t const mask_lo = low_mask0(da);
+            uintmax_t const mask_hi = ~mask_lo << (width-1) << 1; // nb: the extra shift ensures that this works for width_ = 64
+            data[a] = (xa & mask_lo) | (v << da) | (xa & mask_hi);
+        } else {
+            // the bits are the suffix of data_[a] and prefix of data[b]
+            size_t const wa = PACK_BITS - da;
+            assert(wa > 0);
+            assert(wa < width);
+            size_t const wb = width - wa;
+
+            // combine the da lowest bits from a and the wa lowest bits of v
+            uintmax_t const a_lo = data[a] & low_mask0(da);
+            uintmax_t const v_lo = v & low_mask(wa);
+            data[a] = (v_lo << da) | a_lo;
+
+            // combine the db highest bits of b and the wb highest bits of v
+            uintmax_t const b_hi = data[b] >> wb;
+            uintmax_t const v_hi = v >> wa;
+            data[b] = (b_hi << wb) | v_hi;
+        }
     }
 }
 

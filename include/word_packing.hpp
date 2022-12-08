@@ -90,6 +90,40 @@ inline auto accessor(Pack const* data) { return internal::PackedFixedWidthIntCon
 template<size_t width, WordPackEligible Pack>
 inline auto accessor(Pack* data) { return internal::PackedFixedWidthIntAccessor<width, Pack>(data); }
 
+/**
+ * \brief Provides a read-only accessor to packed bits contained in the given pack buffer
+ * 
+ * This is equivalent to a packed-word accessor with bit width 1.
+ * The access methods are specialized for this particular case and are faster than accessing integers of larger widths.
+ * 
+ * \tparam Pack the word pack type
+ * \param data the word pack buffer to access
+ * \return auto the accessor
+ */
+template<WordPackEligible Pack>
+inline auto bit_accessor(Pack const* data) { return accessor<1>(data); }
+
+/**
+ * \brief Provides an accessor to packed bits contained in the given pack buffer
+ * 
+ * This is equivalent to a packed-word accessor with bit width 1.
+ * The access methods are specialized for this particular case and are faster than accessing integers of larger widths.
+ * 
+ * \tparam Pack the word pack type
+ * \param data the word pack buffer to access
+ * \return auto the accessor
+ */
+template<WordPackEligible Pack>
+inline auto bit_accessor(Pack* data) { return accessor<1>(data); }
+
+/**
+ * \brief Convenience definition for bit vectors
+ * 
+ * This is equivalent to a packed integer vector of fixed width one.
+ * The access methods are specialized for this particular case and are faster than accessing integers of larger widths.
+ */
+using BitVector = PackedFixedWidthIntVector<1>;
+
 }
 
 #endif

@@ -4,12 +4,14 @@ This header-only C++20 library provides implementations for vectors of packed (u
 
 Naturally, due to the fact that words are no longer aligned to hardware word sizes, access to packed vectors is slower than aligned access. To achieve access as fast as possible, depending on your use case, we recommend one of the corresponding implementations:
 
-| Word width known at &hellip; | Dynamic resizing required | Recommended Implementation                              |
-| ---------------------------- | ------------------------- | ------------------------------------------------------- |
-| Compile time                 | yes                       | [PackedFixedWidthIntVector](#packedfixedwidthintvector) |
-| Compile time                 | no                        | [Accessors (Fixed Width)](#fixed-width-accessors)       |
-| Runtime                      | yes                       | [PackedIntVector](#packedintvector)                     |
-| Runtime                      | no                        | [Accessors](#accessors)                                 |
+| Word width known at &hellip; | Dynamic resizing required | Recommended Implementation                                   |
+| ---------------------------- | ------------------------- | ------------------------------------------------------------ |
+| Compile time                 | yes                       | [PackedFixedWidthIntVector](#packedfixedwidthintvector) / [BitVector](#bitvector) |
+| Compile time                 | no                        | [Accessors (Fixed Width)](#fixed-width-accessors) / [Bit Accessors](#bit-accessors) |
+| Runtime                      | yes                       | [PackedIntVector](#packedintvector)                          |
+| Runtime                      | no                        | [Accessors](#accessors)                                      |
+
+The fixed-width implementations have specializations for accessing words of width 1 (so-called "bits"), which is particularly faster than for greater widths.
 
 ### Requirements
 
@@ -112,6 +114,10 @@ for(int i = 2; i < 20; i++) {
 }
 ```
 
+#### Bit Accessors
+
+In case you wish to access individual bits, you can use the convenience function `word_packing::bit_accessor` to retrieve a specialized and faster accessor. Note that this is equivalent to calling `word_packing::accessor<1>`.
+
 ### Containers
 
 This library also provides containers that are mostly STL compatible; they can be used very much like `std::vector` and also use capacity doubling when growing. The most notable exception is that if you construct a packed integer vector with a given size or resize it, the allocated memory is *not* initialized.
@@ -161,6 +167,10 @@ for(int i = 2; i < 20; i++) {
     fib[i] = fib[i-2] + fib[i-1];
 }
 ```
+
+#### BitVector
+
+For accessing single bits, the alias type `word_packing::BitVector` provides a specialized and faster implemenation. Note that the same is achieved if you use `word_packing::PackedFixedIntVector<1>`.
 
 ### UintMin
 
@@ -242,3 +252,9 @@ The core implementation of reading and writing packed containers is found in the
 We have an array *A* of integers of width *w* packed into an array *A'* of packs. When accessing the *i*-th integer, it there are two cases to consider: (1) it is completely contained in the *a*-th pack, or (2) its low bits are contained in the *a*-th pack and its high bits are contained in the *b*-th pack. We compute the number of bits *wa* and *wb* contained in *a* or *b*, respectively (*wa + wb = w* holds), as well as the number *da* of low bits from *a* that we can ignore. Using binary arithmetics, we can use this to read or write the desired integer.
 
 The implementation of this procedure is straightforward. There are two pairs of get and set function implementations: `get_rt / set_rt` are for the case where the width per integer is known only at runtime, whereas `get_ct / set_ct` received the width as a compile-time parameter. In the latter, we further optimize the code for the aligned case, that is, if the integer width divides the width of a pack.
+
+### Bit Access
+
+In the special case that *w = 1*, we are guaranteed that *a = b* and *wa = wb = 1*, which heavily simplifies the implementation, resulting in increased access performance. The `get_ct / set_ct` functions provide specializations for this case that are selected at compile time with no runtime overhead.
+
+Note that the runtime implementations `get_rt / set_rt` do *not* feature this specialization, because this would induce an additional branch (to test whether *w == 1*) to *every* access and may slow down access times by a factor.

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5.0 FATAL_ERROR)
 project(word-packing)
 
 # set C++ build flags

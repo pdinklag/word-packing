@@ -22,7 +22,7 @@ This library is written in C++20, a corresponding compiler is required that full
 ```
 MIT License
 
-Copyright (c) 2022 Patrick Dinklage
+Copyright (c) Patrick Dinklage
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

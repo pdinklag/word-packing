@@ -91,6 +91,21 @@ template<size_t width, WordPackEligible Pack>
 inline auto accessor(Pack* data) { return internal::PackedFixedWidthIntAccessor<width, Pack>(data); }
 
 /**
+ * \brief Allocates the required memory for an array of packed words of the given bit width and returns an accessor to it
+ * 
+ * \tparam Pack the word pack type
+ * \param p the unique pointer to an array of word packs that will be assigned the allocated memory
+ * \param num the capacity of the allocated array (in packed words)
+ * \param width the bit width per packed word in the allocated array
+ * \return auto an accessor to the packed word array
+ */
+template<WordPackEligible Pack>
+auto alloc(std::unique_ptr<Pack[]>& p, size_t const num, size_t const width) {
+    p = std::make_unique<Pack[]>(num_packs_required<Pack>(num, width));
+    return accessor(p.get(), width);
+}
+
+/**
  * \brief Provides a read-only accessor to packed bits contained in the given pack buffer
  * 
  * This is equivalent to a packed-word accessor with bit width 1.
@@ -115,6 +130,20 @@ inline auto bit_accessor(Pack const* data) { return accessor<1>(data); }
  */
 template<WordPackEligible Pack>
 inline auto bit_accessor(Pack* data) { return accessor<1>(data); }
+
+/**
+ * \brief Allocates the required memory for an array of packed bits and returns an accessor to it
+ * 
+ * \tparam Pack the word pack type
+ * \param p the unique pointer to an array of bit packs that will be assigned the allocated memory
+ * \param num the capacity of the allocated array (in bits)
+ * \return auto an accessor to the packed bit array
+ */
+template<WordPackEligible Pack>
+auto bit_alloc(std::unique_ptr<Pack[]>& p, size_t const num) {
+    p = std::make_unique<Pack[]>(num_packs_required<Pack>(num, 1));
+    return bit_accessor(p.get());
+}
 
 /**
  * \brief Convenience definition for bit vectors
